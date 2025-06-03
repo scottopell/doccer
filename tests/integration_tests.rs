@@ -132,7 +132,7 @@ fn test_json_validity() {
 
         // Parse as JSON to ensure it's valid
         let _: serde_json::Value =
-            serde_json::from_str(&content).expect(&format!("Invalid JSON in {}", json_path));
+            serde_json::from_str(&content).unwrap_or_else(|_| panic!("Invalid JSON in {}", json_path));
     }
 }
 

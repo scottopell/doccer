@@ -559,7 +559,7 @@ impl TextRenderer {
                         if let Some(variant_item) = self.crate_data.index.get(&variant_id_str) {
                             self.render_variant(
                                 variant_item,
-                                &variant_item
+                                variant_item
                                     .inner
                                     .get("variant")
                                     .unwrap_or(&serde_json::Value::Null),
@@ -842,11 +842,7 @@ impl TextRenderer {
                                         let arg_strs: Vec<String> = args_array
                                             .iter()
                                             .filter_map(|arg| {
-                                                if let Some(type_arg) = arg.get("type") {
-                                                    Some(self.type_to_string(type_arg))
-                                                } else {
-                                                    None
-                                                }
+                                                arg.get("type").map(|type_arg| self.type_to_string(type_arg))
                                             })
                                             .collect();
                                         signature.push_str(&arg_strs.join(", "));
@@ -1242,9 +1238,9 @@ impl TextRenderer {
             // This handles both Self::Key and <Self as Trait>::Error cases
             if let Some(name) = qualified_path.get("name").and_then(|n| n.as_str()) {
                 if name == "Key" {
-                    return format!("Self::Key");
+                    return "Self::Key".to_string();
                 } else if name == "Error" {
-                    return format!("Self::Error");
+                    return "Self::Error".to_string();
                 } else {
                     return format!("Self::{}", name);
                 }
@@ -1258,8 +1254,7 @@ impl TextRenderer {
     fn is_unit_type(&self, type_val: &serde_json::Value) -> bool {
         // Check if this represents the unit type ()
         if type_val
-            .get("tuple")
-            .map_or(false, |t| t.as_array().map_or(false, |arr| arr.is_empty()))
+            .get("tuple").is_some_and(|t| t.as_array().is_some_and(|arr| arr.is_empty()))
         {
             return true;
         }
