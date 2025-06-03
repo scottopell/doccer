@@ -1,0 +1,6 @@
+[package]
+name = "deprecation"
+version = "2.0.0"  # Set a specific version for testing
+edition = "2021"
+
+[dependencies]

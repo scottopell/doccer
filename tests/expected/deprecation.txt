@@ -1,0 +1,74 @@
+# Crate: deprecation
+
+Version: 2.0.0
+
+Deprecation fixture for testing doccer
+
+This crate contains deprecated items to validate
+deprecation notice rendering functionality.
+
+  pub struct Config { ... }
+    /// A simple struct with deprecated field
+
+      pub fn new(api_key: String, timeout_ms: u32) -> Self
+        /// Creates a new config
+
+      pub fn set_timeout(&mut self, seconds: u32)
+        DEPRECATED since 1.1.0
+        /// Old method for setting timeout in seconds
+
+      pub fn set_timeout_ms(&mut self, ms: u32)
+        /// Sets the timeout in milliseconds
+
+  pub enum Status { ... }
+    DEPRECATED since 1.3.0
+    /// A deprecated enum that should be replaced
+
+    Ok
+      /// Everything is fine
+
+    Error
+      /// Something went wrong
+
+  pub enum HttpStatus { ... }
+    /// HTTP status codes
+
+    Ok
+      /// 200 OK
+
+    BadRequest
+      /// 400 Bad Request
+
+    NotFound
+      /// 404 Not Found
+
+    InternalError
+      /// 500 Internal Server Error
+
+  pub trait Handler { ... }
+    /// A trait for handling deprecation
+
+    fn process(&self) -> Result<(), String>
+      /// Process a request
+
+    fn handle_error(&self, error: &str)
+      DEPRECATED since 1.2.5
+      /// Old way of handling errors
+
+  pub struct DefaultHandler { ... }
+    /// Implementation of Handler
+
+  impl Handler for DefaultHandler
+    /// Implementation of Handler trait for DefaultHandler
+
+      fn process(&self) -> Result<(), String>
+
+      fn handle_error(&self, _error: &str)
+        DEPRECATED since 1.2.5
+
+  pub fn connect(host: &str, port: u16) -> bool
+    DEPRECATED since 1.0.0
+    /// A function that is no longer recommended
+
+  pub fn new_connect(host: &str, port: u16) -> Result<(), String>
+    /// New connection function

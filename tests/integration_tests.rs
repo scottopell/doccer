@@ -77,8 +77,13 @@ fn test_complex_fixture() {
 }
 
 #[test]
+fn test_deprecation_fixture() {
+    test_fixture("deprecation");
+}
+
+#[test]
 fn test_all_fixtures_exist() {
-    let fixtures = ["basic_types", "generics", "modules", "complex"];
+    let fixtures = ["basic_types", "generics", "modules", "complex", "deprecation"];
 
     for fixture in &fixtures {
         let json_path = format!("tests/{}.json", fixture);
@@ -124,7 +129,7 @@ fn test_missing_argument() {
 /// Integration test to validate that JSON files are valid rustdoc output
 #[test]
 fn test_json_validity() {
-    let fixtures = ["basic_types", "generics", "modules", "complex"];
+    let fixtures = ["basic_types", "generics", "modules", "complex", "deprecation"];
 
     for fixture in &fixtures {
         let json_path = format!("tests/{}.json", fixture);
@@ -141,7 +146,7 @@ fn test_json_validity() {
 fn test_performance() {
     use std::time::Instant;
 
-    let fixtures = ["basic_types", "generics", "modules", "complex"];
+    let fixtures = ["basic_types", "generics", "modules", "complex", "deprecation"];
     let start = Instant::now();
 
     for fixture in &fixtures {

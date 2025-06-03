@@ -107,6 +107,19 @@ impl TextRenderer {
     fn new(crate_data: Crate) -> Self {
         Self { crate_data }
     }
+    
+    // Helper to render deprecation notice if present
+    fn render_deprecation(&self, item: &Item, output: &mut String, indent: &str) {
+        if let Some(deprecation) = &item.deprecation {
+            output.push_str(&format!("{}  DEPRECATED", indent));
+            
+            if let Some(since) = &deprecation.since {
+                output.push_str(&format!(" since {}", since));
+            }
+            
+            output.push_str("\n");
+        }
+    }
 
     fn render(&self) -> Result<String> {
         let mut output = String::new();
@@ -118,6 +131,11 @@ impl TextRenderer {
                 "# Crate: {}\n\n",
                 root_item.name.as_deref().unwrap_or("unknown")
             ));
+
+            // Add crate version if available
+            if let Some(version) = &self.crate_data.crate_version {
+                output.push_str(&format!("Version: {}\n\n", version));
+            }
 
             if let Some(docs) = &root_item.docs {
                 output.push_str(&format!("{}\n\n", docs));
@@ -302,6 +320,9 @@ impl TextRenderer {
 
         output.push_str(&format!("{}{}\n", indent, signature));
 
+        // Add deprecation notice if present
+        self.render_deprecation(item, output, indent);
+
         // Add documentation
         if let Some(docs) = &item.docs {
             for line in docs.lines() {
@@ -321,6 +342,7 @@ impl TextRenderer {
         indent: &str,
         depth: usize,
     ) -> Result<()> {
+        // Using depth for nested methods indentation
         let mut signature = String::new();
 
         // Add visibility
@@ -346,6 +368,9 @@ impl TextRenderer {
         signature.push_str(" { ... }");
 
         output.push_str(&format!("{}{}\n", indent, signature));
+
+        // Add deprecation notice if present
+        self.render_deprecation(item, output, indent);
 
         // Add documentation
         if let Some(docs) = &item.docs {
@@ -394,7 +419,7 @@ impl TextRenderer {
                                                                         method_item,
                                                                         func_data,
                                                                         output,
-                                                                        &format!("{}  ", indent),
+                                                                        &format!("{}  ", "  ".repeat(depth + 1)),
                                                                     )?;
                                                                 }
                                                             }
@@ -542,6 +567,9 @@ impl TextRenderer {
 
         output.push_str(&format!("{}{}\n", indent, signature));
 
+        // Add deprecation notice if present
+        self.render_deprecation(item, output, indent);
+
         if let Some(docs) = &item.docs {
             for line in docs.lines() {
                 output.push_str(&format!("{}  /// {}\n", indent, line));
@@ -606,6 +634,9 @@ impl TextRenderer {
         signature.push_str(" { ... }");
 
         output.push_str(&format!("{}{}\n", indent, signature));
+
+        // Add deprecation notice if present
+        self.render_deprecation(item, output, indent);
 
         if let Some(docs) = &item.docs {
             for line in docs.lines() {
@@ -791,6 +822,9 @@ impl TextRenderer {
 
         output.push_str(&format!("{}{}\n", indent, signature));
 
+        // Add deprecation notice if present
+        self.render_deprecation(item, output, indent);
+
         if let Some(docs) = &item.docs {
             for line in docs.lines() {
                 output.push_str(&format!("{}  /// {}\n", indent, line));
@@ -809,6 +843,7 @@ impl TextRenderer {
         indent: &str,
         depth: usize,
     ) -> Result<()> {
+        // Using depth for nested methods indentation
         // Render trait impls (not inherent impls - those are handled in struct rendering)
         if let Some(trait_ref) = impl_data.get("trait") {
             if !trait_ref.is_null() {
@@ -900,7 +935,7 @@ impl TextRenderer {
                                                     if let Some(trait_path) = trait_ref.get("path").and_then(|p| p.as_str()) {
                                                         if trait_path.ends_with("Protocol") && name == "Error" {
                                                             // Format the Protocol::Error implementation specially
-                                                            output.push_str(&format!("{}  type Error = HttpError\n", indent));
+                                                            output.push_str(&format!("{}  type Error = HttpError\n", "  ".repeat(depth + 1)));
                                                             output.push('\n');
                                                             continue;
                                                         }
@@ -910,16 +945,16 @@ impl TextRenderer {
                                                     if let Some(type_val) = assoc_type_data.get("type") {
                                                         let type_str = self.type_to_string(type_val);
                                                         output.push_str(&format!(
-                                                            "{}  type {} = {}\n",
-                                                            indent, name, type_str
+                                                            "{}type {} = {}\n",
+                                                            "  ".repeat(depth + 2), name, type_str
                                                         ));
                                                     } else {
                                                         // For Protocol::Error when no type is given, output a special format
                                                         if name == "Error" {
-                                                            output.push_str(&format!("{}  Error(assoc_type)\n", indent));
+                                                            output.push_str(&format!("{}Error(assoc_type)\n", "  ".repeat(depth + 2)));
                                                         } else {
                                                             // Just the associated type name without assignment
-                                                            output.push_str(&format!("{}  type {}\n", indent, name));
+                                                            output.push_str(&format!("{}type {}\n", "  ".repeat(depth + 2), name));
                                                         }
                                                     }
                                                     output.push('\n');
@@ -930,7 +965,7 @@ impl TextRenderer {
                                                 impl_item,
                                                 item_inner.get("function").unwrap(),
                                                 output,
-                                                &format!("{}  ", indent),
+                                                &format!("{}  ", "  ".repeat(depth + 1)),
                                             )?;
                                         }
                                     }
