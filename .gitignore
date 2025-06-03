@@ -1,1 +1,12 @@
 /target
+
+# Ignore debug directories
+tests/fixtures/*/target/debug/
+
+# Ignore CACHEDIR.TAG files
+tests/fixtures/*/target/CACHEDIR.TAG
+
+# Ignore Rust dotfiles in target
+tests/fixtures/*/target/.rustc_info.json
+tests/fixtures/*/target/.rustdoc_fingerprint.json
+

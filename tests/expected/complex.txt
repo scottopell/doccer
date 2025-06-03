@@ -1,0 +1,186 @@
+# Crate: complex
+
+Complex fixture for testing doccer
+
+This crate combines all Rust features to provide a comprehensive
+test of doccer's parsing and rendering capabilities.
+
+# Examples
+
+```rust
+use complex::storage::*;
+let mut storage = Storage::new();
+storage.insert("key", "value");
+```
+
+  macro_rules! format_message($prefix:expr, $content:expr)
+    /// A macro for creating formatted messages
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let msg = format_message!("Hello", "World");
+    /// assert_eq!(msg, "Hello: World");
+    /// ```
+
+  pub mod storage
+    /// Storage and data management
+
+    pub mod string_cache
+      /// Specialized cache for strings
+
+      pub struct StringCache { ... }
+        /// A string cache with complex operations
+
+        pub fn new() -> Self
+          /// Creates a new string cache
+
+        pub fn add(&mut self, key: String, content: String)
+          /// Adds a string to the cache
+
+      pub struct CachedString { ... }
+        /// A cached string with metadata
+
+        pub content: String
+          /// The string content
+
+    pub struct Storage<K, V> where K: Clone + Debug + PartialEq + std::hash::Hash, V: Clone + Debug { ... }
+      /// A generic storage container with complex constraints
+
+      pub capacity: usize
+        /// Maximum capacity
+
+      pub fn new() -> Self
+        /// Creates a new storage with default capacity
+        ///
+        /// # Examples
+        ///
+        /// ```
+        /// let storage: Storage<String, i32> = Storage::new();
+        /// ```
+
+      pub fn with_capacity(capacity: usize) -> Self
+        /// Creates a new storage with specified capacity
+
+      pub fn insert(&mut self, key: K, value: V) -> Option<V>
+        /// Inserts a key-value pair
+
+      pub fn get(&self, key: &K) -> Option<&V>
+        /// Gets a value by key
+
+    pub trait Cacheable<K> where K: Clone { ... }
+      /// A trait for cacheable items
+
+      type Key: Clone + Debug
+        /// The cache key type
+
+      fn cache_key(&self) -> Self::Key
+        /// Gets the cache key for this item
+
+      fn can_cache(&self) -> bool
+        /// Validates if the item can be cached
+
+    pub struct Cache<'a, T: Cacheable<String>> { ... }
+      /// Cache implementation with lifetime parameters
+
+      pub data: &'a [T]
+        /// Reference to the original data
+
+      pub fn new(data: &'a [T]) -> Self
+        /// Creates a new cache
+
+  pub mod network
+    /// Network operations and protocols
+
+    pub mod protocol
+      /// Protocol definitions
+
+      pub trait Protocol<Req, Resp> { ... }
+        /// A generic protocol handler
+
+        type Error: std::error::Error
+          /// The error type for this protocol
+
+        fn handle(&mut self, request: Req) -> Result<Resp, Self::Error>
+          /// Processes a request
+
+      pub struct Http { ... }
+        /// HTTP protocol implementation
+
+      pub struct HttpRequest { ... }
+        /// HTTP request
+
+        pub method: String
+          /// Request method
+
+        pub path: String
+          /// Request path
+
+        pub headers: std::collections::HashMap<String, String>
+          /// Request headers
+
+      pub struct HttpResponse { ... }
+        /// HTTP response
+
+        pub status: u16
+          /// Response status code
+
+        pub body: String
+          /// Response body
+
+      pub struct HttpError { ... }
+        /// HTTP error
+
+        pub message: String
+          /// Error message
+
+      impl Protocol<HttpRequest, HttpResponse> for Http
+        /// Implementation of Protocol trait for Http
+
+        type Error = HttpError
+
+      impl std::fmt::Display for HttpError
+        /// Display implementation for HttpError
+
+      impl std::error::Error for HttpError
+        /// Error trait implementation for HttpError
+
+  pub mod math
+    /// Mathematical operations and utilities
+
+    pub mod constants
+      /// Constants for mathematical operations
+
+      pub const PI: f64
+        /// Mathematical constant π
+
+      pub const E: f64
+        /// Mathematical constant e
+
+      pub const PHI: f64
+        /// Golden ratio
+
+    pub struct Point<T: Copy> { ... }
+      /// A point in 2D space
+
+      pub x: T
+        /// X coordinate
+
+      pub y: T
+        /// Y coordinate
+
+      pub fn new(x: T, y: T) -> Self
+        /// Creates a new point
+
+      pub fn add(self, other: Self) -> Self
+        /// Adds two points together
+
+# Re-exports
+
+  pub use math::Point
+  pub use network::protocol::Http
+  pub use network::protocol::Protocol
+  pub use storage::Storage
+    /// Re-exports for convenience
+
+

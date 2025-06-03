@@ -1,0 +1,46 @@
+# Crate: basic_types
+
+Basic types fixture for testing doccer
+
+This crate contains simple Rust constructs to validate
+basic parsing and rendering functionality.
+
+  pub struct Person { ... }
+    /// A simple person struct
+
+    pub fn new(name: String, age: u32) -> Self
+      /// Creates a new person
+
+    pub fn get_name(&self) -> &str
+      /// Gets the person's name
+
+  impl Named for Person
+    /// Implementation of Named trait for Person
+
+    fn name(&self) -> &str
+
+  pub enum Vehicle { ... }
+    /// Different types of vehicles
+
+    Car(u8)
+      /// A car with number of doors
+
+    Bike
+      /// A bicycle
+
+    Truck { capacity: f32 }
+      /// A truck with cargo capacity in tons
+
+  pub const MAX_USERS: usize
+    /// A simple constant
+
+  pub fn rectangle_area(width: f64, height: f64) -> f64
+    /// Calculates the area of a rectangle
+
+  pub trait Named { ... }
+    /// A trait for things that can be named
+
+    fn name(&self) -> &str
+      /// Returns the name
+
+
