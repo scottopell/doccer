@@ -4,6 +4,7 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::fs;
 use std::io;
+use std::path::Path;
 use std::path::PathBuf;
 use tracing::{debug, info};
 
@@ -1775,7 +1776,7 @@ fn fetch_from_docs_rs(
 
 /// Function to generate documentation JSON for a local crate using rustdoc-json crate
 fn generate_local_crate_docs(
-    crate_path: &PathBuf,
+    crate_path: &Path,
     package: Option<&String>,
     features: Option<&String>,
     all_features: bool,
