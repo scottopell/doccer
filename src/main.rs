@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use clap::{Parser, Subcommand};
+use clap::Parser;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::fs;
@@ -142,7 +142,7 @@ impl TextRenderer {
                 output.push_str(&format!(" since {}", since));
             }
             
-            output.push_str("\n");
+            output.push('\n');
         }
     }
 
@@ -1161,6 +1161,7 @@ impl TextRenderer {
     }
 
     // Helper methods for type rendering
+    #[allow(clippy::only_used_in_recursion)]
     fn type_to_string(&self, type_val: &serde_json::Value) -> String {
         if let Some(primitive) = type_val.get("primitive") {
             if let Some(prim_str) = primitive.as_str() {
@@ -1522,46 +1523,42 @@ impl TextRenderer {
 
 /// CLI Arguments structure
 #[derive(Parser)]
-#[command(author, version, about = "Convert rustdoc JSON to readable text")]
+#[command(author, version, about = "Convert rustdoc JSON to readable text", disable_version_flag = true)]
 struct Cli {
-    #[command(subcommand)]
-    command: Option<Commands>,
+    /// Input JSON file from rustdoc (local file mode) or crate name (docs.rs mode)
+    input: Option<String>,
 
-    /// Input JSON file from rustdoc (local file mode)
-    input: Option<PathBuf>,
-}
+    /// Crate version (defaults to "latest", can also be a specific version like "1.0.0" or "~1" for semver matching)
+    #[arg(short = 'V', long = "crate-version", default_value = "latest")]
+    crate_version: String,
 
-#[derive(Subcommand)]
-enum Commands {
-    /// Fetch documentation from docs.rs and display it
-    DocsRs {
-        /// Crate name
-        #[arg(required = true)]
-        name: String,
+    /// Target platform (defaults to x86_64-unknown-linux-gnu)
+    #[arg(short, long, default_value = "x86_64-unknown-linux-gnu")]
+    target: String,
 
-        /// Version (defaults to "latest", can also be a specific version like "1.0.0" or "~1" for semver matching)
-        #[arg(short, long, default_value = "latest")]
-        version: String,
-
-        /// Target platform (defaults to x86_64-unknown-linux-gnu)
-        #[arg(short, long, default_value = "x86_64-unknown-linux-gnu")]
-        target: String,
-
-        /// Format version (defaults to latest)
-        #[arg(short = 'f', long)]
-        format_version: Option<String>,
-    },
+    /// Format version (defaults to latest)
+    #[arg(short = 'f', long)]
+    format_version: Option<String>,
     
-    /// Generate documentation for a local crate
-    LocalCrate {
-        /// Path to the local crate or workspace
-        #[arg(long, required = true)]
-        crate_path: PathBuf,
-        
-        /// Package name within workspace (required for workspaces)
-        #[arg(short, long)]
-        package: Option<String>,
-    },
+    /// Path to the local crate or workspace (if provided, generates docs for a local crate)
+    #[arg(long)]
+    crate_path: Option<PathBuf>,
+    
+    /// Package name within workspace (required for workspaces when using --crate-path)
+    #[arg(short, long)]
+    package: Option<String>,
+    
+    /// Features to enable when generating documentation for a local crate (comma or space separated)
+    #[arg(long)]
+    features: Option<String>,
+    
+    /// Activate all available features when generating documentation for a local crate
+    #[arg(long)]
+    all_features: bool,
+    
+    /// Do not activate the default features when generating documentation for a local crate
+    #[arg(long)]
+    no_default_features: bool,
 }
 
 /// Function to handle loading a documentation JSON from a file
@@ -1700,262 +1697,120 @@ fn fetch_from_docs_rs(name: &str, version: &str, target: &str, format_version: O
     Ok(json_content)
 }
 
-/// Function to generate documentation JSON for a local crate
-fn generate_local_crate_docs(crate_path: &PathBuf, package: Option<&String>) -> Result<String> {
-    // Check if nightly compiler is available
-    let rustc_version_output = std::process::Command::new("rustc")
-        .args(["+nightly", "--version"])
-        .output()
-        .context("Failed to check for nightly rustc. Make sure you have rustc installed.")?;
-
-    if !rustc_version_output.status.success() {
-        return Err(anyhow::anyhow!(
-            "Nightly Rust compiler is required but not found. Please install it with:\n\
-            rustup install nightly\n\
-            rustup component add --nightly rustfmt"
-        ));
-    }
-
+/// Function to generate documentation JSON for a local crate using rustdoc-json crate
+fn generate_local_crate_docs(
+    crate_path: &PathBuf, 
+    package: Option<&String>,
+    features: Option<&String>,
+    all_features: bool,
+    no_default_features: bool
+) -> Result<String> {
+    println!("Generating documentation for local crate...");
+    
     // Ensure the crate path exists
     if !crate_path.exists() {
         return Err(anyhow::anyhow!("Crate path does not exist: {}", crate_path.display()));
     }
 
-    // Create a temporary directory for the output
-    let temp_dir = std::env::temp_dir().join("doccer_temp");
-    std::fs::create_dir_all(&temp_dir)
-        .context("Failed to create temporary directory")?;
-
-    // Set the output directory
-    let output_dir = temp_dir.join("doc");
-    std::fs::create_dir_all(&output_dir).context("Failed to create output directory")?;
-    
-    // Build a simple command for rustdoc JSON generation
-    // Create a temporary file structure to hold the JSON output
-    let output_file_name = if let Some(pkg) = package {
-        format!("{}.json", pkg)
-    } else {
-        // Try to extract the crate name from Cargo.toml
-        let cargo_toml_path = crate_path.join("Cargo.toml");
-        if let Ok(cargo_toml_content) = std::fs::read_to_string(&cargo_toml_path) {
-            // Simple extraction of package name
-            if let Some(name_line) = cargo_toml_content.lines()
-                .find(|line| line.trim().starts_with("name")) {
-                
-                if let Some(name) = name_line.split('=').nth(1) {
-                    format!("{}.json", name.trim()
-                        .trim_matches('"')
-                        .trim_matches('\''))
-                } else {
-                    "crate_doc.json".to_string()
-                }
-            } else {
-                "crate_doc.json".to_string()
-            }
-        } else {
-            "crate_doc.json".to_string()
-        }
-    };
-    
-    let temp_file = temp_dir.join(output_file_name);
-    
-    // Build the command to run rustdoc directly
-    // In test mode, use the mockup rustdoc script
-    let rustdoc_command = if std::env::var("DOCCER_TEST").is_ok() {
-        "mock_rustdoc.sh"
-    } else {
-        "rustdoc"
-    };
-    
-    let mut command = std::process::Command::new(rustdoc_command);
-    
-    // Change to the crate directory
-    command.current_dir(crate_path);
-    
-    // Use nightly toolchain (except in test mode)
-    if std::env::var("DOCCER_TEST").is_err() {
-        command.arg("+nightly");
-    }
-    
-    // For workspaces, we need to find the lib.rs file
-    let mut lib_path = crate_path.join("src/lib.rs");
-    
-    if let Some(pkg) = package {
-        // For workspace packages, look in the package directory
-        // Common workspace structures:
-        // 1. workspace/pkg_name/src/lib.rs
-        // 2. workspace/packages/pkg_name/src/lib.rs
-        // 3. workspace/crates/pkg_name/src/lib.rs
-        // 4. workspace/libs/pkg_name/src/lib.rs
-        // 5. workspace/services/pkg_name/src/lib.rs
-        
+    // Find the manifest path (Cargo.toml)
+    let manifest_path = if let Some(pkg) = package {
+        // For workspace packages, find the specific package's Cargo.toml
         let potential_paths = [
-            crate_path.join(format!("{}/src/lib.rs", pkg)),
-            crate_path.join(format!("packages/{}/src/lib.rs", pkg)),
-            crate_path.join(format!("crates/{}/src/lib.rs", pkg)),
-            crate_path.join(format!("libs/{}/src/lib.rs", pkg)),
-            crate_path.join(format!("services/{}/src/lib.rs", pkg)),
+            crate_path.join(format!("{}/Cargo.toml", pkg)),
+            crate_path.join(format!("packages/{}/Cargo.toml", pkg)),
+            crate_path.join(format!("crates/{}/Cargo.toml", pkg)),
+            crate_path.join(format!("libs/{}/Cargo.toml", pkg)),
+            crate_path.join(format!("services/{}/Cargo.toml", pkg)),
         ];
         
+        let mut found_path = None;
         for path in &potential_paths {
             if path.exists() {
-                lib_path = path.clone();
+                found_path = Some(path.clone());
                 break;
             }
         }
-    }
-    
-    // Add the path to the lib.rs file
-    command.arg(lib_path.to_str().unwrap());
-    
-    // Add JSON output options
-    command.args([
-        "-Zunstable-options",
-        "--output-format", "json", 
-    ]);
-    
-    // Create parent directories for the output file if needed
-    if let Some(parent) = temp_file.parent() {
-        std::fs::create_dir_all(parent)
-            .context("Failed to create parent directories for output file")?;
-    }
-    
-    // Add output file path
-    command.args(["-o", temp_file.to_str().unwrap()]);
-    
-    // Make temp_file accessible for later use
-    let temp_file_path = temp_file.clone();
-    
-    // Print the command for debugging
-    let command_str = format!("{:?}", command);
-    println!("Running: {}", command_str);
-    println!("Generating documentation...");
-    
-    // Execute command
-    let output = command.output()
-        .context("Failed to execute cargo +nightly rustdoc command")?;
-    
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        let stdout = String::from_utf8_lossy(&output.stdout);
         
-        return Err(anyhow::anyhow!(
-            "Failed to generate documentation:\nCommand: {}\nExit code: {}\nStdout:\n{}\nStderr:\n{}",
-            command_str,
-            output.status,
-            stdout,
-            stderr
-        ));
+        found_path.unwrap_or_else(|| crate_path.join("Cargo.toml"))
+    } else {
+        // For single crates, use the main Cargo.toml
+        crate_path.join("Cargo.toml")
+    };
+
+    // Verify the manifest path exists
+    if !manifest_path.exists() {
+        return Err(anyhow::anyhow!("Cargo.toml not found at: {}", manifest_path.display()));
     }
 
-    // Check if our temporary file was created
-    if temp_file_path.exists() {
-        println!("Found documentation JSON at: {}", temp_file_path.display());
+    println!("Using manifest path: {}", manifest_path.display());
+
+    // Configure the rustdoc-json builder
+    let mut builder = rustdoc_json::Builder::default()
+        .toolchain("nightly")
+        .manifest_path(manifest_path);
+
+    // Apply package filter if specified
+    if let Some(pkg) = package {
+        builder = builder.package(pkg);
+    }
+
+    // Apply feature flags
+    if let Some(feature_list) = features {
+        // rustdoc-json expects features as a Vec<String>
+        let feature_vec: Vec<String> = feature_list
+            .split(',')
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect();
         
-        // Check if it's a file (not a directory)
-        if temp_file_path.is_file() {
-            return std::fs::read_to_string(&temp_file_path)
-                .context("Failed to read generated JSON file");
-        } else if temp_file_path.is_dir() {
-            // If it's a directory, try to find a JSON file in it
-            println!("Output path is a directory, looking for JSON files inside");
-            
-            // List files in the directory
-            let entries = std::fs::read_dir(&temp_file_path)
-                .context("Failed to read output directory")?;
-            
-            // Look for any .json files
-            let mut json_files = Vec::new();
-            for entry in entries {
-                if let Ok(entry) = entry {
-                    let path = entry.path();
-                    if path.is_file() && path.extension().map_or(false, |ext| ext == "json") {
-                        json_files.push(path);
-                    }
-                }
-            }
-            
-            // If we found any JSON files, use the first one
-            if let Some(json_file) = json_files.first() {
-                println!("Found JSON file: {}", json_file.display());
-                return std::fs::read_to_string(json_file)
-                    .context("Failed to read JSON file in output directory");
-            } else {
-                return Err(anyhow::anyhow!("No JSON files found in output directory"));
-            }
-        }
+        builder = builder.features(feature_vec);
     }
-    
-    // If the file doesn't exist, provide detailed error information
-    println!("Documentation JSON file not found at expected location: {}", temp_file_path.display());
-    
-    // List contents of the temp directory to help with debugging
-    println!("Contents of temporary directory:");
-    let temp_dir_entries = match std::fs::read_dir(&temp_dir) {
-        Ok(entries) => entries,
-        Err(e) => {
-            return Err(anyhow::anyhow!(
-                "Failed to read temporary directory: {}. This may indicate a file system permission issue.", 
-                e
-            ));
-        }
-    };
-    
-    let mut found_any_files = false;
-    for entry in temp_dir_entries {
-        if let Ok(entry) = entry {
-            found_any_files = true;
-            println!("  {}", entry.path().display());
-            
-            // If we find any log files, display their contents
-            let path = entry.path();
-            if path.is_file() && (path.extension().map_or(false, |ext| ext == "stderr") || 
-                                  path.extension().map_or(false, |ext| ext == "log")) {
-                if let Ok(content) = std::fs::read_to_string(&path) {
-                    if !content.trim().is_empty() {
-                        println!("\nContents of {}:", path.display());
-                        println!("{}", content);
-                    }
-                }
-            }
-        }
+
+    if all_features {
+        builder = builder.all_features(true);
     }
-    
-    if !found_any_files {
-        println!("  (empty directory)");
+
+    if no_default_features {
+        builder = builder.no_default_features(true);
     }
+
+    // Build the documentation
+    let json_path = builder.build().map_err(|e| anyhow::anyhow!("Failed to generate rustdoc JSON: {}", e))?;
     
-    // Also check if the lib.rs file exists at the path we determined
-    if !lib_path.exists() {
-        return Err(anyhow::anyhow!(
-            "Source file not found at expected location: {}. Make sure the crate path and package name are correct.",
-            lib_path.display()
-        ));
-    }
-    
-    return Err(anyhow::anyhow!(
-        "Failed to generate documentation JSON. Make sure the crate has public items that can be documented and that nightly rustc is properly installed."
-    ));
+    println!("Successfully generated documentation at: {}", json_path.display());
+
+    // Read the generated JSON file
+    fs::read_to_string(&json_path)
+        .with_context(|| format!("Failed to read generated JSON file: {}", json_path.display()))
 }
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    let json_content = match &cli.command {
-        Some(Commands::DocsRs { name, version, target, format_version }) => {
-            // Fetch documentation from docs.rs
-            fetch_from_docs_rs(name, version, target, format_version.as_deref())?
+    let json_content = if let Some(crate_path) = &cli.crate_path {
+        // Local crate mode (if --crate-path is provided)
+        generate_local_crate_docs(
+            crate_path, 
+            cli.package.as_ref(),
+            cli.features.as_ref(),
+            cli.all_features,
+            cli.no_default_features
+        )?
+    } else if let Some(input) = &cli.input {
+        // Check if the input is a file path or a crate name
+        let input_path = PathBuf::from(input);
+        if input_path.exists() || input.ends_with(".json") {
+            // Local file mode (if input exists as a file or has .json extension)
+            load_from_file(&input_path)?
+        } else {
+            // Docs.rs mode (input is treated as a crate name)
+            fetch_from_docs_rs(input, &cli.crate_version, &cli.target, cli.format_version.as_deref())?
         }
-        Some(Commands::LocalCrate { crate_path, package }) => {
-            // Generate documentation for local crate
-            generate_local_crate_docs(crate_path, package.as_ref())?
-        }
-        None => {
-            // Local file mode
-            let input_file = cli.input.ok_or_else(|| 
-                anyhow::anyhow!("Missing input file path. Use --help for usage information."))?;
-            load_from_file(&input_file)?
-        }
+    } else {
+        // No input provided
+        return Err(anyhow::anyhow!(
+            "Missing input. Please provide either a crate name, a JSON file path, or use --crate-path. Use --help for usage information."
+        ));
     };
 
     // Parse the JSON content

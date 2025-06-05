@@ -240,10 +240,10 @@ fn test_performance() {
     );
 }
 
-/// Test the command-line parsing for local-crate subcommand
+/// Test the command-line parsing for local crate mode and direct file reading
 /// This test doesn't require the nightly compiler to be installed
 #[test]
-fn test_local_crate_command_parsing() {
+fn test_cli_command_parsing() {
     // Create a mock sample.json with minimal valid content
     let json_content = r#"{"root":1,"index":{"1":{"id":1,"crate_id":0,"name":"sample","visibility":"public","docs":"Sample crate","links":{},"attrs":[],"deprecation":null,"inner":{"module":{"items":[]}}}},"external_crates":{}}"#;
     
@@ -264,7 +264,7 @@ fn test_local_crate_command_parsing() {
         String::from_utf8_lossy(&build_output.stderr)
     );
 
-    // Verify we can read this file directly
+    // Verify we can read a file directly
     let output = Command::new("./target/debug/doccer")
         .arg(&temp_file)
         .output()
@@ -289,9 +289,9 @@ fn test_local_crate_command_parsing() {
     
     // Test for expected command-line help output
     let help_output = Command::new("./target/debug/doccer")
-        .args(["local-crate", "--help"])
+        .args(["--help"])
         .output()
-        .expect("Failed to run doccer local-crate --help");
+        .expect("Failed to run doccer --help");
     
     let help_text = String::from_utf8_lossy(&help_output.stdout);
     
@@ -303,6 +303,14 @@ fn test_local_crate_command_parsing() {
     assert!(
         help_text.contains("-p, --package"),
         "Help should mention --package option"
+    );
+    assert!(
+        help_text.contains("-V, --crate-version"),
+        "Help should mention --crate-version option"
+    );
+    assert!(
+        help_text.contains("-t, --target"),
+        "Help should mention --target option"
     );
     
     // Clean up

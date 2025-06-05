@@ -6,38 +6,51 @@ Convert Rust documentation from `cargo doc` JSON output to readable text for ter
 
 There are three main ways to use Doccer:
 
-### 1. View documentation for an existing JSON file
-
-```bash
-cargo run target/doc/your_crate.json
-```
-
-### 2. Generate documentation for a local crate
-
-This automatically runs the nightly compiler to generate documentation and displays it:
-
-```bash
-cargo run -- local-crate --crate-path /path/to/your/crate
-```
-
-For a workspace with multiple packages, specify the package:
-
-```bash
-cargo run -- local-crate --crate-path /path/to/workspace -p package_name
-```
-
-### 3. Fetch documentation from docs.rs
+### 1. Fetch documentation from docs.rs (default)
 
 View documentation for a published crate directly from docs.rs:
 
 ```bash
-cargo run -- docs-rs tokio
+doccer tokio
 ```
 
 With specific version:
 
 ```bash
-cargo run -- docs-rs serde --version 1.0.0
+doccer serde --crate-version 1.0.0
+```
+
+### 2. View documentation for an existing JSON file
+
+```bash
+doccer path/to/your_crate.json
+```
+
+### 3. Generate documentation for a local crate
+
+This automatically runs the nightly compiler to generate documentation and displays it:
+
+```bash
+doccer --crate-path /path/to/your/crate
+```
+
+For a workspace with multiple packages, specify the package:
+
+```bash
+doccer --crate-path /path/to/workspace -p package_name
+```
+
+When generating documentation for crates that use feature flags, you can enable specific features:
+
+```bash
+doccer --crate-path /path/to/crate --features "feature1,feature2"
+```
+
+You can also use `--all-features` to enable all available features, or `--no-default-features` to disable default features:
+
+```bash
+doccer --crate-path /path/to/crate --all-features
+doccer --crate-path /path/to/crate --no-default-features --features "specific_feature"
 ```
 
 ## Requirements
