@@ -1,71 +1,209 @@
 # Crate: complex
 
+Version: 0.1.0
+
 Complex fixture for testing doccer
 
-This crate contains more complex Rust constructs to validate
-advanced parsing and rendering functionality.
+This crate combines all Rust features to provide a comprehensive
+test of doccer's parsing and rendering capabilities.
 
-  pub struct HttpClient { ... }
-    /// A client for making HTTP requests
+# Examples
 
-      pub fn new() -> Self
-        /// Creates a new HTTP client
+```rust
+use complex::storage::*;
+let mut storage = Storage::new();
+storage.insert("key", "value");
+```
 
-      pub fn request(&self, method: Method, url: String) -> Result<sub_module::Response, String>
-        /// Makes an HTTP request
+  macro_rules! format_message($prefix:expr, $content:expr)
+    /// A macro for creating formatted messages
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// let msg = format_message!("Hello", "World");
+    /// assert_eq!(msg, "Hello: World");
+    /// ```
 
-      pub fn with_timeout(self, seconds: u64) -> Self
-        /// Sets a timeout for requests
+  pub mod storage
+    /// Storage and data management
 
-  impl Protocol for HttpClient
-    /// Implementation of Protocol trait for HttpClient
+    pub mod string_cache
+      /// Specialized cache for strings
 
-      type Error = HttpError
+      pub struct StringCache { ... }
+        /// A string cache with complex operations
 
-      pub fn connect(&mut self, url: String) -> Result<(), HttpError>
-        /// Implement connect for HTTP
+          pub fn new() -> Self
+            /// Creates a new string cache
 
-      pub fn disconnect(&mut self)
-        /// Implement disconnect for HTTP
+          pub fn add(&mut self, key: String, content: String)
+            /// Adds a string to the cache
 
-  pub enum Method { ... }
-    /// HTTP request methods
+      pub struct CachedString { ... }
+        /// A cached string with metadata
 
-    Get
-      /// HTTP GET method
+      impl Clone for CachedString
+        /// Implementation of Clone trait for CachedString
 
-    Post
-      /// HTTP POST method
+          fn clone(&self) -> CachedString
 
-    Put
-      /// HTTP PUT method
+      impl Debug for CachedString
+        /// Implementation of Debug trait for CachedString
 
-    Delete
-      /// HTTP DELETE method
+          fn fmt(&self, f: &mut $crate::fmt::Formatter<'_>) -> $crate::fmt::Result
 
-    Custom(String)
-      /// Custom HTTP method
+    pub struct Storage<K, V> where K: Clone + Debug + PartialEq + std::hash::Hash, V: Clone + Debug { ... }
+      /// A generic storage container with complex constraints
 
-  pub trait Protocol { ... }
-    /// Protocol for network communications
+        pub fn new() -> Self
+          /// Creates a new storage with default capacity
+          /// 
+          /// # Examples
+          /// 
+          /// ```
+          /// let storage: Storage<String, i32> = Storage::new();
+          /// ```
 
-    type Error: std::error::Error
-      /// Associated error type
+        pub fn with_capacity(capacity: usize) -> Self
+          /// Creates a new storage with specified capacity
 
-    pub fn connect(&mut self, url: String) -> Result<(), Self::Error>
-      /// Connect to the endpoint
+        pub fn insert(&mut self, key: K, value: V) -> Option<V>
+          /// Inserts a key-value pair
 
-    pub fn disconnect(&mut self)
-      /// Disconnect from the endpoint
+        pub fn get(&self, key: &K) -> Option<&V>
+          /// Gets a value by key
 
-  pub mod sub_module
-    /// A submodule with additional types
+    pub trait Cacheable<K> where K: Clone { ... }
+      /// A trait for cacheable items
 
-    pub struct Response { ... }
-      /// HTTP response
+      type Key: Clone + Debug
+        /// The cache key type
 
-        pub fn is_success(&self) -> bool
-          /// Checks if the response status is a success code
+      fn cache_key(&self) -> Self::Key
+        /// Gets the cache key for this item
 
-    pub struct Headers { ... }
-      /// HTTP headers collection
+      fn can_cache(&self) -> bool
+        /// Validates if the item can be cached
+
+    pub struct Cache<'a, T: Cacheable> { ... }
+      /// Cache implementation with lifetime parameters
+
+        pub fn new(data: &'a [T]) -> Self
+          /// Creates a new cache
+
+  pub mod network
+    /// Network operations and protocols
+
+    pub mod protocol
+      /// Protocol definitions
+
+      pub trait Protocol<Req, Resp> { ... }
+        /// A generic protocol handler
+
+        type Error: std::error::Error
+          /// The error type for this protocol
+
+        fn handle(&mut self, request: Req) -> Result<Resp, Self::Error>
+          /// Processes a request
+
+      pub struct Http { ... }
+        /// HTTP protocol implementation
+
+      impl Protocol<HttpRequest, HttpResponse> for Http
+        /// Implementation of Protocol trait for Http
+
+          type Error = HttpError
+
+          fn handle(&mut self, request: HttpRequest) -> Result<HttpResponse, Self::Error>
+
+      pub struct HttpRequest { ... }
+        /// HTTP request
+
+      impl Protocol<HttpRequest, HttpResponse> for Http
+        /// Implementation of Protocol trait for Http
+
+          type Error = HttpError
+
+          fn handle(&mut self, request: HttpRequest) -> Result<HttpResponse, Self::Error>
+
+      pub struct HttpResponse { ... }
+        /// HTTP response
+
+      impl Protocol<HttpRequest, HttpResponse> for Http
+        /// Implementation of Protocol trait for Http
+
+          type Error = HttpError
+
+          fn handle(&mut self, request: HttpRequest) -> Result<HttpResponse, Self::Error>
+
+      pub struct HttpError { ... }
+        /// HTTP error
+
+      impl Debug for HttpError
+        /// Implementation of Debug trait for HttpError
+
+          fn fmt(&self, f: &mut $crate::fmt::Formatter<'_>) -> $crate::fmt::Result
+
+      impl Display for HttpError
+        /// Implementation of Display trait for HttpError
+
+          fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
+
+      impl Error for HttpError
+        /// Implementation of Error trait for HttpError
+
+  pub mod math
+    /// Mathematical operations and utilities
+
+    pub mod constants
+      /// Constants for mathematical operations
+
+      pub const PI: f64
+        /// Mathematical constant π
+
+      pub const E: f64
+        /// Mathematical constant e
+
+      pub const PHI: f64
+        /// Golden ratio
+
+    pub struct Point<T: Copy> { ... }
+      /// A point in 2D space
+
+        pub fn new(x: T, y: T) -> Self
+          /// Creates a new point
+
+        pub fn add(self, other: Self) -> Self
+          /// Adds two points together
+
+    impl Debug for Point<T>
+      /// Implementation of Debug trait for Point
+
+        fn fmt(&self, f: &mut $crate::fmt::Formatter<'_>) -> $crate::fmt::Result
+
+    impl Clone for Point<T>
+      /// Implementation of Clone trait for Point
+
+        fn clone(&self) -> Point<T>
+
+    impl Copy for Point<T>
+      /// Implementation of Copy trait for Point
+
+    impl StructuralPartialEq for Point<T>
+      /// Implementation of StructuralPartialEq trait for Point
+
+    impl PartialEq for Point<T>
+      /// Implementation of PartialEq trait for Point
+
+        fn eq(&self, other: &Point<T>) -> bool
+
+# Re-exports
+
+  pub use math::Point
+  pub use network::protocol::Http
+  pub use network::protocol::Protocol
+  pub use storage::Storage
+    /// Re-exports for convenience
+
+

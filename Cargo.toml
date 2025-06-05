@@ -16,6 +16,8 @@ anyhow = "1.0"
 reqwest = { version = "0.11", features = ["blocking", "json"] }
 zstd = "0.12"
 rustdoc-json = "0.9.6"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [dev-dependencies]
 tempfile = "3.10.0"

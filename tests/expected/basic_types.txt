@@ -1,5 +1,7 @@
 # Crate: basic_types
 
+Version: 0.1.0
+
 Basic types fixture for testing doccer
 
 This crate contains simple Rust constructs to validate
@@ -13,6 +15,11 @@ basic parsing and rendering functionality.
 
       pub fn get_name(&self) -> &str
         /// Gets the person's name
+
+  impl Named for Person
+    /// Implementation of Named trait for Person
+
+      fn name(&self) -> &str
 
   pub enum Vehicle { ... }
     /// Different types of vehicles
@@ -35,5 +42,7 @@ basic parsing and rendering functionality.
   pub trait Named { ... }
     /// A trait for things that can be named
 
-    pub fn name(&self) -> &str
+    fn name(&self) -> &str
       /// Returns the name
+
+

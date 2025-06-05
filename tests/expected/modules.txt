@@ -56,3 +56,5 @@ patterns to validate hierarchical structure parsing.
 
         pub fn host(&self) -> &str
           /// Gets the host
+
+

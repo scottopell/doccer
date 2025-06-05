@@ -1,44 +1,19 @@
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::Command;
-use tempfile::TempDir;
-
-// Create a temporary directory that will live for the duration of the test
-fn create_test_dir() -> TempDir {
-    tempfile::tempdir().expect("Failed to create temporary directory")
-}
-
-// Generate documentation JSON for a test fixture
-fn generate_fixture_json(fixture_name: &str, temp_dir: &TempDir) -> PathBuf {
-    // Create a path to a file in the temporary directory
-    let fixture_path = temp_dir.path().join(format!("{}.json", fixture_name));
-    
-    // For real tests, we'd generate this by running the app in local-crate mode
-    // But for now, we'll just use the existing JSON fixtures to avoid a circular dependency
-    let source_json_path = format!("tests/{}.json", fixture_name);
-    
-    // Copy the existing JSON file to the temp directory
-    fs::copy(&source_json_path, &fixture_path)
-        .expect(&format!("Failed to copy fixture from {} to {}", source_json_path, fixture_path.display()));
-    
-    fixture_path
-}
-
-// Clean output by removing "Loading file:" lines
-fn clean_output(output: &str) -> String {
-    output.lines()
-        .filter(|line| !line.starts_with("Loading file:"))
-        .collect::<Vec<&str>>()
-        .join("\n")
-}
 
 /// Test doccer against a fixture by comparing output with expected results
 fn test_fixture(fixture_name: &str) {
-    let temp_dir = create_test_dir();
-    
-    // Generate the JSON fixture
-    let json_path = generate_fixture_json(fixture_name, &temp_dir);
-    
+    // Path to the fixture crate
+    let fixture_crate_path = format!("tests/fixtures/{}", fixture_name);
+
+    // Ensure the fixture crate exists
+    assert!(
+        Path::new(&fixture_crate_path).exists(),
+        "Fixture crate not found: {}",
+        fixture_crate_path
+    );
+
     // Get path for expected output
     let expected_path = format!("tests/expected/{}.txt", fixture_name);
 
@@ -51,38 +26,35 @@ fn test_fixture(fixture_name: &str) {
 
     // Read expected output
     let expected = fs::read_to_string(&expected_path).expect("Failed to read expected output file");
-    
+
     // Build the doccer binary first
     let build_output = Command::new("cargo")
         .args(["build"])
         .output()
         .expect("Failed to build doccer");
-    
+
     assert!(
         build_output.status.success(),
         "Failed to build doccer: {}",
         String::from_utf8_lossy(&build_output.stderr)
     );
-    
-    // Run doccer on the generated fixture file
+
+    // Run doccer with --crate-path to generate fresh documentation from the fixture crate
     let output = Command::new("./target/debug/doccer")
-        .arg(&json_path)
+        .args(["--crate-path", &fixture_crate_path])
         .output()
         .expect("Failed to execute doccer");
-    
+
     // Check that the command succeeded
     assert!(
         output.status.success(),
         "doccer failed to run on {}: {}",
-        json_path.display(),
+        fixture_crate_path,
         String::from_utf8_lossy(&output.stderr)
     );
-    
-    let actual_raw = String::from_utf8_lossy(&output.stdout).to_string();
-    
-    // Clean the output by removing the "Loading file:" line
-    let actual = clean_output(&actual_raw);
-    
+
+    let actual = String::from_utf8_lossy(&output.stdout).to_string();
+
     // Compare actual output with expected output
     assert_eq!(
         actual.trim(),
@@ -117,18 +89,25 @@ fn test_deprecation_fixture() {
     test_fixture("deprecation");
 }
 
+/// Test that all fixture crates and expected files exist
 #[test]
 fn test_all_fixtures_exist() {
-    let fixtures = ["basic_types", "generics", "modules", "complex", "deprecation"];
+    let fixtures = [
+        "basic_types",
+        "generics",
+        "modules",
+        "complex",
+        "deprecation",
+    ];
 
     for fixture in &fixtures {
-        let json_path = format!("tests/{}.json", fixture);
+        let fixture_crate_path = format!("tests/fixtures/{}", fixture);
         let expected_path = format!("tests/expected/{}.txt", fixture);
 
         assert!(
-            Path::new(&json_path).exists(),
-            "Missing JSON file: {}",
-            json_path
+            Path::new(&fixture_crate_path).exists(),
+            "Missing fixture crate: {}",
+            fixture_crate_path
         );
 
         assert!(
@@ -147,7 +126,7 @@ fn test_invalid_input() {
         .args(["build"])
         .output()
         .expect("Failed to build doccer");
-    
+
     assert!(
         build_output.status.success(),
         "Failed to build doccer: {}",
@@ -171,7 +150,7 @@ fn test_missing_argument() {
         .args(["build"])
         .output()
         .expect("Failed to build doccer");
-    
+
     assert!(
         build_output.status.success(),
         "Failed to build doccer: {}",
@@ -187,7 +166,7 @@ fn test_missing_argument() {
 }
 
 /// Test to validate that we can handle sample JSON
-/// This uses a small sample we know is valid, not the fixture files 
+/// This uses a small sample we know is valid, not the fixture files
 #[test]
 fn test_json_validity() {
     // Create a sample valid JSON
@@ -199,7 +178,7 @@ fn test_json_validity() {
                 "id": 1,
                 "crate_id": 0,
                 "name": "example",
-                "visibility": "public", 
+                "visibility": "public",
                 "docs": "Example crate",
                 "links": {},
                 "attrs": [],
@@ -211,8 +190,8 @@ fn test_json_validity() {
     }"#;
 
     // Parse as JSON to ensure we can handle this format
-    let _: serde_json::Value = serde_json::from_str(sample_json)
-        .expect("Sample JSON should be valid");
+    let _: serde_json::Value =
+        serde_json::from_str(sample_json).expect("Sample JSON should be valid");
 }
 
 /// Test performance - all fixtures should process quickly
@@ -220,7 +199,13 @@ fn test_json_validity() {
 fn test_performance() {
     use std::time::Instant;
 
-    let fixtures = ["basic_types", "generics", "modules", "complex", "deprecation"];
+    let fixtures = [
+        "basic_types",
+        "generics",
+        "modules",
+        "complex",
+        "deprecation",
+    ];
     let start = Instant::now();
 
     for fixture in &fixtures {
@@ -246,18 +231,18 @@ fn test_performance() {
 fn test_cli_command_parsing() {
     // Create a mock sample.json with minimal valid content
     let json_content = r#"{"root":1,"index":{"1":{"id":1,"crate_id":0,"name":"sample","visibility":"public","docs":"Sample crate","links":{},"attrs":[],"deprecation":null,"inner":{"module":{"items":[]}}}},"external_crates":{}}"#;
-    
+
     // Write to a temporary file
     let temp_dir = tempfile::tempdir().expect("Failed to create temporary directory");
     let temp_file = temp_dir.path().join("sample.json");
     fs::write(&temp_file, json_content).expect("Failed to write sample JSON file");
-    
+
     // Ensure debug build exists
     let build_output = Command::new("cargo")
         .args(["build"])
         .output()
         .expect("Failed to build doccer");
-    
+
     assert!(
         build_output.status.success(),
         "Failed to build doccer: {}",
@@ -269,13 +254,13 @@ fn test_cli_command_parsing() {
         .arg(&temp_file)
         .output()
         .expect("Failed to run doccer with sample JSON file");
-    
+
     assert!(
         output.status.success(),
         "Command failed: {}",
         String::from_utf8_lossy(&output.stderr)
     );
-    
+
     // Verify output contains expected content
     let output_str = String::from_utf8_lossy(&output.stdout);
     assert!(
@@ -286,15 +271,15 @@ fn test_cli_command_parsing() {
         output_str.contains("Sample crate"),
         "Output should contain crate documentation"
     );
-    
+
     // Test for expected command-line help output
     let help_output = Command::new("./target/debug/doccer")
         .args(["--help"])
         .output()
         .expect("Failed to run doccer --help");
-    
+
     let help_text = String::from_utf8_lossy(&help_output.stdout);
-    
+
     // Verify help output contains expected options
     assert!(
         help_text.contains("--crate-path"),
@@ -312,7 +297,9 @@ fn test_cli_command_parsing() {
         help_text.contains("-t, --target"),
         "Help should mention --target option"
     );
-    
+
     // Clean up
-    temp_dir.close().expect("Failed to clean up temporary directory");
+    temp_dir
+        .close()
+        .expect("Failed to clean up temporary directory");
 }

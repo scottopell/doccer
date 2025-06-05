@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::io;
 use std::path::PathBuf;
+use tracing::{debug, info};
 
 // Core data structures for modern rustdoc JSON format
 
@@ -1616,7 +1617,7 @@ struct Cli {
 
 /// Function to handle loading a documentation JSON from a file
 fn load_from_file(file_path: &PathBuf) -> Result<String> {
-    println!("Loading file: {}", file_path.to_string_lossy());
+    info!("Loading file: {}", file_path.to_string_lossy());
 
     // Read the JSON file
     fs::read_to_string(file_path)
@@ -1655,7 +1656,7 @@ fn fetch_from_docs_rs(
         url.push_str(fv);
     }
 
-    println!("Fetching documentation from: {}", url);
+    info!("Fetching documentation from: {}", url);
 
     // Docs.rs redirects to static.docs.rs, so we need to follow redirects
     let client = reqwest::blocking::Client::builder()
@@ -1663,7 +1664,7 @@ fn fetch_from_docs_rs(
         .build()?;
 
     // Print more detailed debugging information
-    println!("Sending request...");
+    debug!("Sending request...");
     let response = client
         .get(&url)
         .header("User-Agent", concat!("doccer/", env!("CARGO_PKG_VERSION")))
@@ -1692,7 +1693,7 @@ fn fetch_from_docs_rs(
 
     // Print the final URL after redirects
     let final_url = response.url().clone();
-    println!("Fetched from: {}", final_url);
+    debug!("Fetched from: {}", final_url);
 
     // Check if the response is zstandard compressed
     let content_type = response
@@ -1702,13 +1703,13 @@ fn fetch_from_docs_rs(
         .unwrap_or("")
         .to_string(); // Clone to avoid borrow issues
 
-    println!("Content-Type: {}", content_type);
+    debug!("Content-Type: {}", content_type);
 
     // Check if we need to append .json.zst to the URL if we got a redirect to a directory
     if final_url.path().ends_with("/") {
-        println!("URL ends with directory, retrying with .json.zst extension");
+        debug!("URL ends with directory, retrying with .json.zst extension");
         let new_url = format!("{}json.zst", final_url);
-        println!("New URL: {}", new_url);
+        debug!("New URL: {}", new_url);
 
         let response = client
             .get(&new_url)
@@ -1737,10 +1738,10 @@ fn fetch_from_docs_rs(
 
         // Read response as bytes
         let bytes = response.bytes()?;
-        println!("Downloaded {} bytes", bytes.len());
+        debug!("Downloaded {} bytes", bytes.len());
 
         // For .json.zst URLs, always use zstd decompression
-        println!("Decompressing zstd data...");
+        debug!("Decompressing zstd data...");
         let decompressed =
             zstd::decode_all(io::Cursor::new(bytes)).context("Failed to decompress zstd data")?;
 
@@ -1750,14 +1751,14 @@ fn fetch_from_docs_rs(
 
     // Read response as bytes for the original URL
     let bytes = response.bytes()?;
-    println!("Downloaded {} bytes", bytes.len());
+    debug!("Downloaded {} bytes", bytes.len());
 
     let json_content = if content_type.contains("application/zstd")
         || final_url.path().ends_with(".zst")
         || bytes.starts_with(&[0x28, 0xB5, 0x2F, 0xFD])
     {
         // zstd magic number
-        println!("Decompressing zstd data...");
+        debug!("Decompressing zstd data...");
         // Decompress with zstd
         let decompressed =
             zstd::decode_all(io::Cursor::new(bytes)).context("Failed to decompress zstd data")?;
@@ -1765,7 +1766,7 @@ fn fetch_from_docs_rs(
         String::from_utf8(decompressed).context("Failed to convert decompressed data to UTF-8")?
     } else {
         // Just read the regular JSON content
-        println!("Using raw JSON content");
+        debug!("Using raw JSON content");
         String::from_utf8(bytes.to_vec()).context("Failed to convert response data to UTF-8")?
     };
 
@@ -1780,7 +1781,7 @@ fn generate_local_crate_docs(
     all_features: bool,
     no_default_features: bool,
 ) -> Result<String> {
-    println!("Generating documentation for local crate...");
+    info!("Generating documentation for local crate...");
 
     // Ensure the crate path exists
     if !crate_path.exists() {
@@ -1823,7 +1824,7 @@ fn generate_local_crate_docs(
         ));
     }
 
-    println!("Using manifest path: {}", manifest_path.display());
+    info!("Using manifest path: {}", manifest_path.display());
 
     // Configure the rustdoc-json builder
     let mut builder = rustdoc_json::Builder::default()
@@ -1860,7 +1861,7 @@ fn generate_local_crate_docs(
         .build()
         .map_err(|e| anyhow::anyhow!("Failed to generate rustdoc JSON: {}", e))?;
 
-    println!(
+    info!(
         "Successfully generated documentation at: {}",
         json_path.display()
     );
@@ -1875,6 +1876,11 @@ fn generate_local_crate_docs(
 }
 
 fn main() -> Result<()> {
+    // Initialize tracing with environment filter (defaults to no output)
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .init();
+
     let cli = Cli::parse();
 
     let json_content = if let Some(crate_path) = &cli.crate_path {
