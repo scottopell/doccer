@@ -11,14 +11,21 @@ There are three main ways to use Doccer:
 View documentation for a published crate directly from docs.rs:
 
 ```bash
-doccer tokio
+doccer clap
 ```
 
 With specific version:
 
 ```bash
-doccer serde --crate-version 1.0.0
+doccer clap --crate-version 4.5.0
 ```
+
+**Note:** docs.rs only began generating JSON documentation artifacts for crates published after May 23, 2025. Many older crates or versions won't have these artifacts available yet. They will become available as crates publish new versions.
+
+Some popular crates with JSON documentation available:
+- clap (4.3.0+)
+- tokio (recent versions)
+- serde (recent versions)
 
 ### 2. View documentation for an existing JSON file
 

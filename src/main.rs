@@ -65,9 +65,9 @@ struct Item {
 #[serde(untagged)]
 enum Visibility {
     Simple(String),
-    Restricted { 
+    Restricted {
         #[allow(dead_code)] // Preserved to match rustdoc JSON format
-        restricted: RestrictedVisibility 
+        restricted: RestrictedVisibility,
     },
 }
 
@@ -132,16 +132,16 @@ impl TextRenderer {
     fn new(crate_data: Crate) -> Self {
         Self { crate_data }
     }
-    
+
     // Helper to render deprecation notice if present
     fn render_deprecation(&self, item: &Item, output: &mut String, indent: &str) {
         if let Some(deprecation) = &item.deprecation {
             output.push_str(&format!("{}  DEPRECATED", indent));
-            
+
             if let Some(since) = &deprecation.since {
                 output.push_str(&format!(" since {}", since));
             }
-            
+
             output.push('\n');
         }
     }
@@ -444,7 +444,10 @@ impl TextRenderer {
                                                                         method_item,
                                                                         func_data,
                                                                         output,
-                                                                        &format!("{}  ", "  ".repeat(depth + 1)),
+                                                                        &format!(
+                                                                            "{}  ",
+                                                                            "  ".repeat(depth + 1)
+                                                                        ),
                                                                     )?;
                                                                 }
                                                             }
@@ -729,17 +732,25 @@ impl TextRenderer {
                             if let Some(bound) = bounds.first() {
                                 if let Some(trait_bound) = bound.get("trait_bound") {
                                     if let Some(trait_info) = trait_bound.get("trait") {
-                                        if let Some(path) = trait_info.get("path").and_then(|p| p.as_str()) {
+                                        if let Some(path) =
+                                            trait_info.get("path").and_then(|p| p.as_str())
+                                        {
                                             if path == "std::error::Error" {
                                                 // This is the Protocol::Error type we want to format specially
-                                                output.push_str(&format!("{}type Error: std::error::Error\n", indent));
-                                                
+                                                output.push_str(&format!(
+                                                    "{}type Error: std::error::Error\n",
+                                                    indent
+                                                ));
+
                                                 if let Some(docs) = &item.docs {
                                                     for line in docs.lines() {
-                                                        output.push_str(&format!("{}  /// {}\n", indent, line));
+                                                        output.push_str(&format!(
+                                                            "{}  /// {}\n",
+                                                            indent, line
+                                                        ));
                                                     }
                                                 }
-                                                
+
                                                 output.push('\n');
                                                 return Ok(());
                                             }
@@ -752,7 +763,7 @@ impl TextRenderer {
                 }
             }
         }
-    
+
         // Regular associated type rendering
         let mut signature = String::new();
         signature.push_str("type ");
@@ -786,7 +797,7 @@ impl TextRenderer {
         output.push('\n');
         Ok(())
     }
-    
+
     fn render_associated_const(
         &self,
         item: &Item,
@@ -873,12 +884,13 @@ impl TextRenderer {
         if let Some(trait_ref) = impl_data.get("trait") {
             if !trait_ref.is_null() {
                 // Check for synthetic implementation marker to identify derived implementations
-                if let Some(is_synthetic) = impl_data.get("is_synthetic").and_then(|v| v.as_bool()) {
+                if let Some(is_synthetic) = impl_data.get("is_synthetic").and_then(|v| v.as_bool())
+                {
                     if is_synthetic {
                         return Ok(());
                     }
                 }
-                
+
                 // Check for derive attribute in item attributes
                 if item.attrs.iter().any(|attr| attr.contains("#[derive")) {
                     return Ok(());
@@ -902,7 +914,8 @@ impl TextRenderer {
                                         let arg_strs: Vec<String> = args_array
                                             .iter()
                                             .filter_map(|arg| {
-                                                arg.get("type").map(|type_arg| self.type_to_string(type_arg))
+                                                arg.get("type")
+                                                    .map(|type_arg| self.type_to_string(type_arg))
                                             })
                                             .collect();
                                         signature.push_str(&arg_strs.join(", "));
@@ -955,31 +968,53 @@ impl TextRenderer {
                                         if item_inner.contains_key("assoc_type") {
                                             // Handle associated type in impl block
                                             if let Some(name) = &impl_item.name {
-                                                if let Some(assoc_type_data) = item_inner.get("assoc_type") {
+                                                if let Some(assoc_type_data) =
+                                                    item_inner.get("assoc_type")
+                                                {
                                                     // Special case for Protocol trait implementation
-                                                    if let Some(trait_path) = trait_ref.get("path").and_then(|p| p.as_str()) {
-                                                        if trait_path.ends_with("Protocol") && name == "Error" {
+                                                    if let Some(trait_path) = trait_ref
+                                                        .get("path")
+                                                        .and_then(|p| p.as_str())
+                                                    {
+                                                        if trait_path.ends_with("Protocol")
+                                                            && name == "Error"
+                                                        {
                                                             // Format the Protocol::Error implementation specially
-                                                            output.push_str(&format!("{}  type Error = HttpError\n", "  ".repeat(depth + 1)));
+                                                            output.push_str(&format!(
+                                                                "{}  type Error = HttpError\n",
+                                                                "  ".repeat(depth + 1)
+                                                            ));
                                                             output.push('\n');
                                                             continue;
                                                         }
                                                     }
-                                                    
+
                                                     // Normal case for other associated types
-                                                    if let Some(type_val) = assoc_type_data.get("type") {
-                                                        let type_str = self.type_to_string(type_val);
+                                                    if let Some(type_val) =
+                                                        assoc_type_data.get("type")
+                                                    {
+                                                        let type_str =
+                                                            self.type_to_string(type_val);
                                                         output.push_str(&format!(
                                                             "{}type {} = {}\n",
-                                                            "  ".repeat(depth + 2), name, type_str
+                                                            "  ".repeat(depth + 2),
+                                                            name,
+                                                            type_str
                                                         ));
                                                     } else {
                                                         // For Protocol::Error when no type is given, output a special format
                                                         if name == "Error" {
-                                                            output.push_str(&format!("{}Error(assoc_type)\n", "  ".repeat(depth + 2)));
+                                                            output.push_str(&format!(
+                                                                "{}Error(assoc_type)\n",
+                                                                "  ".repeat(depth + 2)
+                                                            ));
                                                         } else {
                                                             // Just the associated type name without assignment
-                                                            output.push_str(&format!("{}type {}\n", "  ".repeat(depth + 2), name));
+                                                            output.push_str(&format!(
+                                                                "{}type {}\n",
+                                                                "  ".repeat(depth + 2),
+                                                                name
+                                                            ));
                                                         }
                                                     }
                                                     output.push('\n');
@@ -1315,7 +1350,8 @@ impl TextRenderer {
     fn is_unit_type(&self, type_val: &serde_json::Value) -> bool {
         // Check if this represents the unit type ()
         if type_val
-            .get("tuple").is_some_and(|t| t.as_array().is_some_and(|arr| arr.is_empty()))
+            .get("tuple")
+            .is_some_and(|t| t.as_array().is_some_and(|arr| arr.is_empty()))
         {
             return true;
         }
@@ -1420,7 +1456,7 @@ impl TextRenderer {
         // And immediately after structs and enums, render their trait implementations
         for item_id in &regular_items {
             self.render_item(item_id, output, depth + 1)?;
-            
+
             // If this is a struct or enum, immediately render its trait implementations
             if let Some(item) = self.crate_data.index.get(item_id) {
                 if let Some(inner_obj) = item.inner.as_object() {
@@ -1429,14 +1465,19 @@ impl TextRenderer {
                             if let Some(impls) = item_data.get("impls") {
                                 if let Some(impl_ids) = impls.as_array() {
                                     let mut seen_trait_impls = std::collections::HashSet::new();
-                                    
+
                                     for impl_id in impl_ids {
                                         if let Some(impl_id_num) = impl_id.as_u64() {
                                             let impl_id_str = impl_id_num.to_string();
-                                            if let Some(impl_item) = self.crate_data.index.get(&impl_id_str) {
-                                                if let Some(impl_inner) = impl_item.inner.get("impl") {
+                                            if let Some(impl_item) =
+                                                self.crate_data.index.get(&impl_id_str)
+                                            {
+                                                if let Some(impl_inner) =
+                                                    impl_item.inner.get("impl")
+                                                {
                                                     // Only render trait impls (not inherent impls)
-                                                    if let Some(trait_ref) = impl_inner.get("trait") {
+                                                    if let Some(trait_ref) = impl_inner.get("trait")
+                                                    {
                                                         if !trait_ref.is_null() {
                                                             // Skip synthetic and blanket impls
                                                             let is_synthetic = impl_inner
@@ -1450,11 +1491,18 @@ impl TextRenderer {
 
                                                             if !is_synthetic && !is_blanket {
                                                                 // Create a deduplication key based on the trait path
-                                                                let trait_path = trait_ref.get("path").and_then(|p| p.as_str()).unwrap_or("unknown");
-                                                                
+                                                                let trait_path = trait_ref
+                                                                    .get("path")
+                                                                    .and_then(|p| p.as_str())
+                                                                    .unwrap_or("unknown");
+
                                                                 // Only render this trait implementation if we haven't seen it yet
-                                                                if !seen_trait_impls.contains(trait_path) {
-                                                                    seen_trait_impls.insert(trait_path.to_string());
+                                                                if !seen_trait_impls
+                                                                    .contains(trait_path)
+                                                                {
+                                                                    seen_trait_impls.insert(
+                                                                        trait_path.to_string(),
+                                                                    );
                                                                     // Render trait implementation immediately after its type
                                                                     self.render_item_with_trait_control(&impl_id_str, output, depth + 1, true)?;
                                                                 }
@@ -1523,7 +1571,12 @@ impl TextRenderer {
 
 /// CLI Arguments structure
 #[derive(Parser)]
-#[command(author, version, about = "Convert rustdoc JSON to readable text", disable_version_flag = true)]
+#[command(
+    author,
+    version,
+    about = "Convert rustdoc JSON to readable text",
+    disable_version_flag = true
+)]
 struct Cli {
     /// Input JSON file from rustdoc (local file mode) or crate name (docs.rs mode)
     input: Option<String>,
@@ -1539,23 +1592,23 @@ struct Cli {
     /// Format version (defaults to latest)
     #[arg(short = 'f', long)]
     format_version: Option<String>,
-    
+
     /// Path to the local crate or workspace (if provided, generates docs for a local crate)
     #[arg(long)]
     crate_path: Option<PathBuf>,
-    
+
     /// Package name within workspace (required for workspaces when using --crate-path)
     #[arg(short, long)]
     package: Option<String>,
-    
+
     /// Features to enable when generating documentation for a local crate (comma or space separated)
     #[arg(long)]
     features: Option<String>,
-    
+
     /// Activate all available features when generating documentation for a local crate
     #[arg(long)]
     all_features: bool,
-    
+
     /// Do not activate the default features when generating documentation for a local crate
     #[arg(long)]
     no_default_features: bool,
@@ -1564,50 +1617,60 @@ struct Cli {
 /// Function to handle loading a documentation JSON from a file
 fn load_from_file(file_path: &PathBuf) -> Result<String> {
     println!("Loading file: {}", file_path.to_string_lossy());
-    
+
     // Read the JSON file
     fs::read_to_string(file_path)
         .with_context(|| format!("Failed to read file: {}", file_path.display()))
 }
 
 /// Function to fetch documentation JSON from docs.rs
-fn fetch_from_docs_rs(name: &str, version: &str, target: &str, format_version: Option<&str>) -> Result<String> {
+fn fetch_from_docs_rs(
+    name: &str,
+    version: &str,
+    target: &str,
+    format_version: Option<&str>,
+) -> Result<String> {
     // Build the URL based on the parameters
     let mut url = if target == "x86_64-unknown-linux-gnu" {
         // Default target can be omitted
-        format!("https://docs.rs/crate/{}/{}/json", 
-              name, 
-              // URL encode tilde for semver patterns
-              version.replace("~", "%7E"))
+        format!(
+            "https://docs.rs/crate/{}/{}/json",
+            name,
+            // URL encode tilde for semver patterns
+            version.replace("~", "%7E")
+        )
     } else {
-        format!("https://docs.rs/crate/{}/{}/{}/json", 
-              name, 
-              // URL encode tilde for semver patterns
-              version.replace("~", "%7E"), 
-              target)
+        format!(
+            "https://docs.rs/crate/{}/{}/{}/json",
+            name,
+            // URL encode tilde for semver patterns
+            version.replace("~", "%7E"),
+            target
+        )
     };
-    
+
     // Add format version if specified
     if let Some(fv) = format_version {
         url.push('/');
         url.push_str(fv);
     }
-    
+
     println!("Fetching documentation from: {}", url);
-    
+
     // Docs.rs redirects to static.docs.rs, so we need to follow redirects
     let client = reqwest::blocking::Client::builder()
         .redirect(reqwest::redirect::Policy::limited(10))
         .build()?;
-    
+
     // Print more detailed debugging information
     println!("Sending request...");
-    let response = client.get(&url)
+    let response = client
+        .get(&url)
         .header("User-Agent", concat!("doccer/", env!("CARGO_PKG_VERSION")))
         .header("Accept", "application/json, application/zstd")
         .send()
         .with_context(|| format!("Failed to fetch documentation from {}", url))?;
-    
+
     if response.status().as_u16() == 404 {
         return Err(anyhow::anyhow!(
             "Documentation not found for crate '{}' version '{}' on target '{}'. \n\
@@ -1615,37 +1678,44 @@ fn fetch_from_docs_rs(name: &str, version: &str, target: &str, format_version: O
              1. The crate doesn't exist\n\
              2. The version doesn't exist\n\
              3. The target isn't supported\n\
-             4. The crate hasn't been built with rustdoc JSON output (required nightly after 2023-05-23)",
+             4. The crate version was published before May 23, 2025\n\n\
+             Note: docs.rs only generates JSON documentation for crates published after May 23, 2025.\n\
+             Try a newer version or try a different crate like 'clap' (4.3.0+) which has JSON documentation.",
             name, version, target
         ));
     } else if !response.status().is_success() {
-        return Err(anyhow::anyhow!("Failed to fetch documentation: HTTP {}", response.status()));
+        return Err(anyhow::anyhow!(
+            "Failed to fetch documentation: HTTP {}",
+            response.status()
+        ));
     }
-    
+
     // Print the final URL after redirects
     let final_url = response.url().clone();
     println!("Fetched from: {}", final_url);
-    
+
     // Check if the response is zstandard compressed
-    let content_type = response.headers()
+    let content_type = response
+        .headers()
         .get("content-type")
         .and_then(|h| h.to_str().ok())
         .unwrap_or("")
         .to_string(); // Clone to avoid borrow issues
-    
+
     println!("Content-Type: {}", content_type);
-    
+
     // Check if we need to append .json.zst to the URL if we got a redirect to a directory
     if final_url.path().ends_with("/") {
         println!("URL ends with directory, retrying with .json.zst extension");
         let new_url = format!("{}json.zst", final_url);
         println!("New URL: {}", new_url);
-        
-        let response = client.get(&new_url)
+
+        let response = client
+            .get(&new_url)
             .header("User-Agent", concat!("doccer/", env!("CARGO_PKG_VERSION")))
             .send()
             .with_context(|| format!("Failed to fetch documentation from {}", new_url))?;
-            
+
         if response.status().as_u16() == 404 {
             return Err(anyhow::anyhow!(
                 "Documentation not found for crate '{}' version '{}' on target '{}'. \n\
@@ -1653,63 +1723,71 @@ fn fetch_from_docs_rs(name: &str, version: &str, target: &str, format_version: O
                  1. The crate doesn't exist\n\
                  2. The version doesn't exist\n\
                  3. The target isn't supported\n\
-                 4. The crate hasn't been built with rustdoc JSON output (required nightly after 2023-05-23)",
+                 4. The crate version was published before May 23, 2025\n\n\
+                 Note: docs.rs only generates JSON documentation for crates published after May 23, 2025.\n\
+                 Try a newer version or try a different crate like 'clap' (4.3.0+) which has JSON documentation.",
                 name, version, target
             ));
         } else if !response.status().is_success() {
-            return Err(anyhow::anyhow!("Failed to fetch documentation: HTTP {}", response.status()));
+            return Err(anyhow::anyhow!(
+                "Failed to fetch documentation: HTTP {}",
+                response.status()
+            ));
         }
-        
+
         // Read response as bytes
         let bytes = response.bytes()?;
         println!("Downloaded {} bytes", bytes.len());
-        
+
         // For .json.zst URLs, always use zstd decompression
         println!("Decompressing zstd data...");
-        let decompressed = zstd::decode_all(io::Cursor::new(bytes))
-            .context("Failed to decompress zstd data")?;
-        
+        let decompressed =
+            zstd::decode_all(io::Cursor::new(bytes)).context("Failed to decompress zstd data")?;
+
         return String::from_utf8(decompressed)
             .context("Failed to convert decompressed data to UTF-8");
     }
-    
+
     // Read response as bytes for the original URL
     let bytes = response.bytes()?;
     println!("Downloaded {} bytes", bytes.len());
-    
-    let json_content = if content_type.contains("application/zstd") 
-                        || final_url.path().ends_with(".zst")
-                        || bytes.starts_with(&[0x28, 0xB5, 0x2F, 0xFD]) { // zstd magic number
+
+    let json_content = if content_type.contains("application/zstd")
+        || final_url.path().ends_with(".zst")
+        || bytes.starts_with(&[0x28, 0xB5, 0x2F, 0xFD])
+    {
+        // zstd magic number
         println!("Decompressing zstd data...");
         // Decompress with zstd
-        let decompressed = zstd::decode_all(io::Cursor::new(bytes))
-            .context("Failed to decompress zstd data")?;
-        
-        String::from_utf8(decompressed)
-            .context("Failed to convert decompressed data to UTF-8")?
+        let decompressed =
+            zstd::decode_all(io::Cursor::new(bytes)).context("Failed to decompress zstd data")?;
+
+        String::from_utf8(decompressed).context("Failed to convert decompressed data to UTF-8")?
     } else {
         // Just read the regular JSON content
         println!("Using raw JSON content");
-        String::from_utf8(bytes.to_vec())
-            .context("Failed to convert response data to UTF-8")?
+        String::from_utf8(bytes.to_vec()).context("Failed to convert response data to UTF-8")?
     };
-    
+
     Ok(json_content)
 }
 
 /// Function to generate documentation JSON for a local crate using rustdoc-json crate
 fn generate_local_crate_docs(
-    crate_path: &PathBuf, 
+    crate_path: &PathBuf,
     package: Option<&String>,
     features: Option<&String>,
     all_features: bool,
-    no_default_features: bool
+    no_default_features: bool,
 ) -> Result<String> {
     println!("Generating documentation for local crate...");
-    
+
     // Ensure the crate path exists
     if !crate_path.exists() {
-        return Err(anyhow::anyhow!("Crate path does not exist: {}", crate_path.display()));
+        return Err(anyhow::anyhow!(
+            "Crate path does not exist: {}",
+            crate_path.display()
+        ));
     }
 
     // Find the manifest path (Cargo.toml)
@@ -1722,7 +1800,7 @@ fn generate_local_crate_docs(
             crate_path.join(format!("libs/{}/Cargo.toml", pkg)),
             crate_path.join(format!("services/{}/Cargo.toml", pkg)),
         ];
-        
+
         let mut found_path = None;
         for path in &potential_paths {
             if path.exists() {
@@ -1730,7 +1808,7 @@ fn generate_local_crate_docs(
                 break;
             }
         }
-        
+
         found_path.unwrap_or_else(|| crate_path.join("Cargo.toml"))
     } else {
         // For single crates, use the main Cargo.toml
@@ -1739,7 +1817,10 @@ fn generate_local_crate_docs(
 
     // Verify the manifest path exists
     if !manifest_path.exists() {
-        return Err(anyhow::anyhow!("Cargo.toml not found at: {}", manifest_path.display()));
+        return Err(anyhow::anyhow!(
+            "Cargo.toml not found at: {}",
+            manifest_path.display()
+        ));
     }
 
     println!("Using manifest path: {}", manifest_path.display());
@@ -1762,7 +1843,7 @@ fn generate_local_crate_docs(
             .map(|s| s.trim().to_string())
             .filter(|s| !s.is_empty())
             .collect();
-        
+
         builder = builder.features(feature_vec);
     }
 
@@ -1775,13 +1856,22 @@ fn generate_local_crate_docs(
     }
 
     // Build the documentation
-    let json_path = builder.build().map_err(|e| anyhow::anyhow!("Failed to generate rustdoc JSON: {}", e))?;
-    
-    println!("Successfully generated documentation at: {}", json_path.display());
+    let json_path = builder
+        .build()
+        .map_err(|e| anyhow::anyhow!("Failed to generate rustdoc JSON: {}", e))?;
+
+    println!(
+        "Successfully generated documentation at: {}",
+        json_path.display()
+    );
 
     // Read the generated JSON file
-    fs::read_to_string(&json_path)
-        .with_context(|| format!("Failed to read generated JSON file: {}", json_path.display()))
+    fs::read_to_string(&json_path).with_context(|| {
+        format!(
+            "Failed to read generated JSON file: {}",
+            json_path.display()
+        )
+    })
 }
 
 fn main() -> Result<()> {
@@ -1790,11 +1880,11 @@ fn main() -> Result<()> {
     let json_content = if let Some(crate_path) = &cli.crate_path {
         // Local crate mode (if --crate-path is provided)
         generate_local_crate_docs(
-            crate_path, 
+            crate_path,
             cli.package.as_ref(),
             cli.features.as_ref(),
             cli.all_features,
-            cli.no_default_features
+            cli.no_default_features,
         )?
     } else if let Some(input) = &cli.input {
         // Check if the input is a file path or a crate name
@@ -1804,7 +1894,12 @@ fn main() -> Result<()> {
             load_from_file(&input_path)?
         } else {
             // Docs.rs mode (input is treated as a crate name)
-            fetch_from_docs_rs(input, &cli.crate_version, &cli.target, cli.format_version.as_deref())?
+            fetch_from_docs_rs(
+                input,
+                &cli.crate_version,
+                &cli.target,
+                cli.format_version.as_deref(),
+            )?
         }
     } else {
         // No input provided
@@ -1814,8 +1909,8 @@ fn main() -> Result<()> {
     };
 
     // Parse the JSON content
-    let crate_data: Crate = serde_json::from_str(&json_content)
-        .context("Failed to parse JSON documentation")?;
+    let crate_data: Crate =
+        serde_json::from_str(&json_content).context("Failed to parse JSON documentation")?;
 
     // Generate text output
     let renderer = TextRenderer::new(crate_data);
