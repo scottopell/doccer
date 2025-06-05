@@ -18,6 +18,7 @@ zstd = "0.12"
 rustdoc-json = "0.9.6"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+dirs = "5.0"
 
 [dev-dependencies]
 tempfile = "3.10.0"

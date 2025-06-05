@@ -4,9 +4,30 @@ Convert Rust documentation from `cargo doc` JSON output to readable text for ter
 
 ## Usage
 
-There are three main ways to use Doccer:
+There are four main ways to use Doccer:
 
-### 1. Fetch documentation from docs.rs (default)
+### 1. View Standard Library Documentation
+
+View Rust's standard library documentation directly:
+
+```bash
+# View entire standard library
+doccer std
+
+# View specific modules
+doccer std::net
+doccer std::collections::HashMap
+doccer core::mem
+doccer alloc::vec::Vec
+```
+
+**Note:** To use this feature, you need to install the nightly Rust toolchain and the `rust-docs-json` component:
+```
+rustup toolchain install nightly
+rustup component add rust-docs-json --toolchain nightly
+```
+
+### 2. Fetch documentation from docs.rs (default)
 
 View documentation for a published crate directly from docs.rs:
 
@@ -27,13 +48,13 @@ Some popular crates with JSON documentation available:
 - tokio (recent versions)
 - serde (recent versions)
 
-### 2. View documentation for an existing JSON file
+### 3. View documentation for an existing JSON file
 
 ```bash
 doccer path/to/your_crate.json
 ```
 
-### 3. Generate documentation for a local crate
+### 4. Generate documentation for a local crate
 
 This automatically runs the nightly compiler to generate documentation and displays it:
 
@@ -66,6 +87,11 @@ doccer --crate-path /path/to/crate --no-default-features --features "specific_fe
   ```
   rustup install nightly
   rustup component add --nightly rustfmt
+  ```
+
+- For standard library documentation, you'll need the `rust-docs-json` component:
+  ```
+  rustup component add rust-docs-json --toolchain nightly
   ```
 
 ## Goal

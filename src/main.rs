@@ -6,6 +6,7 @@ use std::fs;
 use std::io;
 use std::path::Path;
 use std::path::PathBuf;
+use std::env;
 use tracing::{debug, info};
 
 // Core data structures for modern rustdoc JSON format
@@ -54,31 +55,16 @@ struct Item {
     name: Option<String>,
     #[allow(dead_code)] // Preserved to match rustdoc JSON format
     span: Option<Span>,
-    visibility: Visibility,
+    // Handle visibility as raw JSON to accommodate different stdlib formats
+    #[serde(default)]
+    visibility: serde_json::Value,
     docs: Option<String>,
     #[allow(dead_code)] // Preserved to match rustdoc JSON format
     links: HashMap<String, serde_json::Value>,
+    #[serde(default)]
     attrs: Vec<String>,
     deprecation: Option<Deprecation>,
     inner: serde_json::Value, // We'll handle this as raw JSON
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-enum Visibility {
-    Simple(String),
-    Restricted {
-        #[allow(dead_code)] // Preserved to match rustdoc JSON format
-        restricted: RestrictedVisibility,
-    },
-}
-
-#[derive(Debug, Deserialize)]
-struct RestrictedVisibility {
-    #[allow(dead_code)] // Preserved to match rustdoc JSON format
-    parent: String,
-    #[allow(dead_code)] // Preserved to match rustdoc JSON format
-    path: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -267,9 +253,10 @@ impl TextRenderer {
         let mut signature = String::new();
 
         // Add visibility
-        match &item.visibility {
-            Visibility::Simple(vis) if vis == "public" => signature.push_str("pub "),
-            _ => {}
+        if let Some(vis) = item.visibility.as_str() {
+            if vis == "public" {
+                signature.push_str("pub ");
+            }
         }
 
         signature.push_str("fn ");
@@ -373,9 +360,10 @@ impl TextRenderer {
         let mut signature = String::new();
 
         // Add visibility
-        match &item.visibility {
-            Visibility::Simple(vis) if vis == "public" => signature.push_str("pub "),
-            _ => {}
+        if let Some(vis) = item.visibility.as_str() {
+            if vis == "public" {
+                signature.push_str("pub ");
+            }
         }
 
         signature.push_str("struct ");
@@ -574,9 +562,10 @@ impl TextRenderer {
     ) -> Result<()> {
         let mut signature = String::new();
 
-        match &item.visibility {
-            Visibility::Simple(vis) if vis == "public" => signature.push_str("pub "),
-            _ => {}
+        if let Some(vis) = item.visibility.as_str() {
+            if vis == "public" {
+                signature.push_str("pub ");
+            }
         }
 
         signature.push_str("enum ");
@@ -642,9 +631,10 @@ impl TextRenderer {
     ) -> Result<()> {
         let mut signature = String::new();
 
-        match &item.visibility {
-            Visibility::Simple(vis) if vis == "public" => signature.push_str("pub "),
-            _ => {}
+        if let Some(vis) = item.visibility.as_str() {
+            if vis == "public" {
+                signature.push_str("pub ");
+            }
         }
 
         signature.push_str("trait ");
@@ -841,9 +831,10 @@ impl TextRenderer {
     ) -> Result<()> {
         let mut signature = String::new();
 
-        match &item.visibility {
-            Visibility::Simple(vis) if vis == "public" => signature.push_str("pub "),
-            _ => {}
+        if let Some(vis) = item.visibility.as_str() {
+            if vis == "public" {
+                signature.push_str("pub ");
+            }
         }
 
         signature.push_str("const ");
@@ -1173,10 +1164,12 @@ impl TextRenderer {
         let mut signature = String::new();
 
         // Add visibility
-        match &item.visibility {
-            Visibility::Simple(vis) if vis == "public" => signature.push_str("pub "),
-            Visibility::Restricted { .. } => signature.push_str("pub(crate) "),
-            _ => {}
+        if let Some(vis) = item.visibility.as_str() {
+            if vis == "public" {
+                signature.push_str("pub ");
+            }
+        } else if item.visibility.is_object() && item.visibility.get("restricted").is_some() {
+            signature.push_str("pub(crate) ");
         }
 
         if let Some(name) = &item.name {
@@ -1405,9 +1398,10 @@ impl TextRenderer {
                 let mut mod_signature = String::new();
 
                 // Add visibility
-                match &item.visibility {
-                    Visibility::Simple(vis) if vis == "public" => mod_signature.push_str("pub "),
-                    _ => {}
+                if let Some(vis) = item.visibility.as_str() {
+                    if vis == "public" {
+                        mod_signature.push_str("pub ");
+                    }
                 }
 
                 mod_signature.push_str("mod ");
@@ -1547,9 +1541,10 @@ impl TextRenderer {
             let mut use_signature = String::new();
 
             // Add visibility
-            match &item.visibility {
-                Visibility::Simple(vis) if vis == "public" => use_signature.push_str("pub "),
-                _ => {}
+            if let Some(vis) = item.visibility.as_str() {
+                if vis == "public" {
+                    use_signature.push_str("pub ");
+                }
             }
 
             use_signature.push_str("use ");
@@ -1571,7 +1566,56 @@ impl TextRenderer {
     }
 }
 
-/// CLI Arguments structure
+//// Types of input that can be provided to doccer
+enum InputType {
+    /// External crate from docs.rs
+    ExternalCrate(String),
+    /// Local JSON file
+    LocalFile(PathBuf),
+    /// Local crate to generate docs for
+    LocalCrate,
+    /// Standard library documentation
+    Stdlib {
+        crate_name: String,        // "std", "core", "alloc"
+        module_path: Option<String>, // "net", "collections::HashMap"
+    }
+}
+
+/// Parse the module path from an input string like "std::net" or "core::mem"
+fn parse_module_path(input: &str) -> Option<String> {
+    let parts: Vec<&str> = input.split("::").collect();
+    if parts.len() <= 1 {
+        None
+    } else {
+        Some(parts[1..].join("::"))
+    }
+}
+
+/// Resolve the input type based on the input string
+fn resolve_input(input: &str) -> InputType {
+    if input.starts_with("std::") || input == "std" {
+        InputType::Stdlib {
+            crate_name: "std".to_string(),
+            module_path: parse_module_path(input),
+        }
+    } else if input.starts_with("core::") || input == "core" {
+        InputType::Stdlib {
+            crate_name: "core".to_string(),
+            module_path: parse_module_path(input),
+        }
+    } else if input.starts_with("alloc::") || input == "alloc" {
+        InputType::Stdlib {
+            crate_name: "alloc".to_string(),
+            module_path: parse_module_path(input),
+        }
+    } else if input.ends_with(".json") || Path::new(input).exists() {
+        InputType::LocalFile(PathBuf::from(input))
+    } else {
+        InputType::ExternalCrate(input.to_string())
+    }
+}
+
+// CLI Arguments structure
 #[derive(Parser)]
 #[command(
     author,
@@ -1580,7 +1624,7 @@ impl TextRenderer {
     disable_version_flag = true
 )]
 struct Cli {
-    /// Input JSON file from rustdoc (local file mode) or crate name (docs.rs mode)
+    /// Input: crate name (serde), stdlib module (std::net), JSON file, or leave empty for local crate
     input: Option<String>,
 
     /// Crate version (defaults to "latest", can also be a specific version like "1.0.0" or "~1" for semver matching)
@@ -1614,6 +1658,10 @@ struct Cli {
     /// Do not activate the default features when generating documentation for a local crate
     #[arg(long)]
     no_default_features: bool,
+    
+    /// Toolchain to use for stdlib docs (default: nightly)
+    #[arg(long, help = "Toolchain to use for stdlib docs (default: nightly)")]
+    toolchain: Option<String>,
 }
 
 /// Function to handle loading a documentation JSON from a file
@@ -1774,6 +1822,190 @@ fn fetch_from_docs_rs(
     Ok(json_content)
 }
 
+/// Function to filter a Crate structure to show only items in a specific module path
+fn filter_by_module_path(crate_data: &mut Crate, module_path: &str) -> Result<()> {
+    // Split module path into segments
+    let segments: Vec<&str> = module_path.split("::").collect();
+    
+    // Start from the root module
+    let mut current_module_id = crate_data.root;
+    let mut current_module_name = "root".to_string();
+    
+    // Traverse the module hierarchy to find the target module
+    for segment in &segments {
+        let mut found = false;
+        
+        // Get the current module
+        if let Some(current_module) = crate_data.index.get(&current_module_id.to_string()) {
+            // Check if it's a module
+            if let Some(module_inner) = current_module.inner.get("module") {
+                // Try to find the next segment in the module's items
+                if let Ok(module_data) = serde_json::from_value::<Module>(module_inner.clone()) {
+                    for item_id in &module_data.items {
+                        if let Some(item) = crate_data.index.get(&item_id.to_string()) {
+                            if let Some(name) = &item.name {
+                                if name == segment {
+                                    // Found the next module in the path
+                                    if let Some(item_id_val) = item.id {
+                                        current_module_id = item_id_val;
+                                        current_module_name = name.clone();
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        if !found {
+            return Err(anyhow::anyhow!(
+                "Module '{}' not found in the path '{}'", 
+                segment, 
+                module_path
+            ));
+        }
+    }
+    
+    // At this point, current_module_id points to the target module
+    // Update the crate's root to point to the target module
+    crate_data.root = current_module_id;
+    
+    // Filter the index to include only items that are part of the target module
+    // Start by collecting all items related to the target module
+    let mut items_to_keep = std::collections::HashSet::new();
+    let mut queue = vec![current_module_id];
+    
+    // Breadth-first search to find all items in the target module and its submodules
+    while let Some(module_id) = queue.pop() {
+        items_to_keep.insert(module_id.to_string());
+        
+        if let Some(module_item) = crate_data.index.get(&module_id.to_string()) {
+            if let Some(module_inner) = module_item.inner.get("module") {
+                if let Ok(module_data) = serde_json::from_value::<Module>(module_inner.clone()) {
+                    for item_id in &module_data.items {
+                        let item_id_str = item_id.to_string();
+                        items_to_keep.insert(item_id_str.clone());
+                        
+                        // If the item is a module, add it to the queue for further traversal
+                        if let Some(item) = crate_data.index.get(&item_id_str) {
+                            if let Some(inner_obj) = item.inner.as_object() {
+                                if inner_obj.contains_key("module") {
+                                    if let Some(id_val) = item.id {
+                                        queue.push(id_val);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Remove items that are not part of the target module
+    crate_data.index.retain(|k, _| items_to_keep.contains(k));
+    
+    // Update the crate's name to reflect the module path
+    if let Some(root_item) = crate_data.index.get_mut(&crate_data.root.to_string()) {
+        if let Some(name) = &mut root_item.name {
+            // Don't overwrite the name if the module path is just the crate name
+            if !segments.is_empty() {
+                *name = current_module_name;
+            }
+        }
+    }
+    
+    Ok(())
+}
+
+/// Function to load standard library documentation from local rustup installation
+fn load_stdlib_docs(crate_name: &str, toolchain: Option<&str>) -> Result<String> {
+    let toolchain = toolchain.unwrap_or("nightly");
+    
+    // Get target triple for current system
+    let target_triple = match get_target_triple() {
+        Ok(triple) => triple,
+        Err(e) => return Err(e),
+    };
+    
+    let home_dir = match env::var("HOME") {
+        Ok(home) => PathBuf::from(home),
+        Err(_) => match dirs::home_dir() {
+            Some(home) => home,
+            None => return Err(anyhow::anyhow!("Could not determine home directory")),
+        },
+    };
+
+    let json_path = home_dir
+        .join(".rustup/toolchains")
+        .join(format!("{}-{}", toolchain, target_triple))
+        .join("share/doc/rust/json")
+        .join(format!("{}.json", crate_name));
+
+    if json_path.exists() {
+        info!("Loading stdlib JSON from: {}", json_path.display());
+        fs::read_to_string(json_path)
+            .context("Failed to read stdlib JSON")
+    } else {
+        Err(anyhow::anyhow!(
+            "Standard library documentation not found at {}.\n\n\
+             To view stdlib docs, install: rustup component add rust-docs-json --toolchain nightly\n\
+             Then try: doccer {}",
+            json_path.display(), crate_name
+        ))
+    }
+}
+
+/// Get the current system's target triple (e.g., x86_64-apple-darwin)
+fn get_target_triple() -> Result<String> {
+    // Try to get from rustc
+    let output = std::process::Command::new("rustc")
+        .args(&["--version", "--verbose"])
+        .output();
+    
+    match output {
+        Ok(output) => {
+            let output = String::from_utf8_lossy(&output.stdout);
+            for line in output.lines() {
+                if line.starts_with("host: ") {
+                    return Ok(line[6..].to_string());
+                }
+            }
+            Err(anyhow::anyhow!("Could not determine target triple from rustc output"))
+        },
+        Err(_) => {
+            // Fallback: make a best guess based on OS/arch
+            #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+            return Ok("x86_64-unknown-linux-gnu".to_string());
+            
+            #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
+            return Ok("aarch64-unknown-linux-gnu".to_string());
+            
+            #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+            return Ok("x86_64-apple-darwin".to_string());
+            
+            #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+            return Ok("aarch64-apple-darwin".to_string());
+            
+            #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
+            return Ok("x86_64-pc-windows-msvc".to_string());
+            
+            #[cfg(all(target_os = "windows", target_arch = "aarch64"))]
+            return Ok("aarch64-pc-windows-msvc".to_string());
+            
+            #[cfg(not(any(
+                all(target_os = "linux", any(target_arch = "x86_64", target_arch = "aarch64")),
+                all(target_os = "macos", any(target_arch = "x86_64", target_arch = "aarch64")),
+                all(target_os = "windows", any(target_arch = "x86_64", target_arch = "aarch64"))
+            )))]
+            Err(anyhow::anyhow!("Could not determine target triple for current system"))
+        }
+    }
+}
+
 /// Function to generate documentation JSON for a local crate using rustdoc-json crate
 fn generate_local_crate_docs(
     crate_path: &Path,
@@ -1884,40 +2116,61 @@ fn main() -> Result<()> {
 
     let cli = Cli::parse();
 
-    let json_content = if let Some(crate_path) = &cli.crate_path {
-        // Local crate mode (if --crate-path is provided)
-        generate_local_crate_docs(
-            crate_path,
-            cli.package.as_ref(),
-            cli.features.as_ref(),
-            cli.all_features,
-            cli.no_default_features,
-        )?
+    // Determine the input type based on CLI arguments
+    let input_type = if let Some(_) = &cli.crate_path {
+        InputType::LocalCrate
     } else if let Some(input) = &cli.input {
-        // Check if the input is a file path or a crate name
-        let input_path = PathBuf::from(input);
-        if input_path.exists() || input.ends_with(".json") {
-            // Local file mode (if input exists as a file or has .json extension)
-            load_from_file(&input_path)?
-        } else {
-            // Docs.rs mode (input is treated as a crate name)
+        resolve_input(input)
+    } else {
+        // No input provided
+        return Err(anyhow::anyhow!(
+            "Missing input. Please provide either a crate name, a stdlib module (std::net), a JSON file path, or use --crate-path. Use --help for usage information."
+        ));
+    };
+
+    // Process input based on type
+    let json_content = match &input_type {
+        InputType::LocalCrate => {
+            // Local crate mode (if --crate-path is provided)
+            if let Some(crate_path) = &cli.crate_path {
+                generate_local_crate_docs(
+                    crate_path,
+                    cli.package.as_ref(),
+                    cli.features.as_ref(),
+                    cli.all_features,
+                    cli.no_default_features,
+                )?
+            } else {
+                return Err(anyhow::anyhow!("Missing --crate-path argument for local crate mode"));
+            }
+        }
+        InputType::LocalFile(path) => {
+            // Local file mode
+            load_from_file(path)?
+        }
+        InputType::ExternalCrate(name) => {
+            // Docs.rs mode
             fetch_from_docs_rs(
-                input,
+                name,
                 &cli.crate_version,
                 &cli.target,
                 cli.format_version.as_deref(),
             )?
         }
-    } else {
-        // No input provided
-        return Err(anyhow::anyhow!(
-            "Missing input. Please provide either a crate name, a JSON file path, or use --crate-path. Use --help for usage information."
-        ));
+        InputType::Stdlib { crate_name, module_path: _ } => {
+            // Standard library mode
+            load_stdlib_docs(crate_name, cli.toolchain.as_deref())?
+        }
     };
 
     // Parse the JSON content
-    let crate_data: Crate =
+    let mut crate_data: Crate =
         serde_json::from_str(&json_content).context("Failed to parse JSON documentation")?;
+    
+    // If this is a stdlib request with a module path, filter to that module
+    if let InputType::Stdlib { crate_name: _, module_path: Some(ref path) } = input_type {
+        filter_by_module_path(&mut crate_data, path)?;
+    }
 
     // Generate text output
     let renderer = TextRenderer::new(crate_data);
