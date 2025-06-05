@@ -51,8 +51,6 @@ jobs:
   integration-tests:
     name: Run Integration Tests with Latest Stable
     runs-on: ubuntu-latest
-    # Only run this job for scheduled workflow or when manually triggered
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v3
       
