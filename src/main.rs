@@ -2,11 +2,11 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use serde::Deserialize;
 use std::collections::HashMap;
+use std::env;
 use std::fs;
 use std::io;
 use std::path::Path;
 use std::path::PathBuf;
-use std::env;
 use tracing::{debug, info};
 
 // Core data structures for modern rustdoc JSON format
@@ -1576,9 +1576,9 @@ enum InputType {
     LocalCrate,
     /// Standard library documentation
     Stdlib {
-        crate_name: String,        // "std", "core", "alloc"
+        crate_name: String,          // "std", "core", "alloc"
         module_path: Option<String>, // "net", "collections::HashMap"
-    }
+    },
 }
 
 /// Parse the module path from an input string like "std::net" or "core::mem"
@@ -1658,7 +1658,7 @@ struct Cli {
     /// Do not activate the default features when generating documentation for a local crate
     #[arg(long)]
     no_default_features: bool,
-    
+
     /// Toolchain to use for stdlib docs (default: nightly)
     #[arg(long, help = "Toolchain to use for stdlib docs (default: nightly)")]
     toolchain: Option<String>,
@@ -1826,15 +1826,15 @@ fn fetch_from_docs_rs(
 fn filter_by_module_path(crate_data: &mut Crate, module_path: &str) -> Result<()> {
     // Split module path into segments
     let segments: Vec<&str> = module_path.split("::").collect();
-    
+
     // Start from the root module
     let mut current_module_id = crate_data.root;
     let mut current_module_name = "root".to_string();
-    
+
     // Traverse the module hierarchy to find the target module
     for segment in &segments {
         let mut found = false;
-        
+
         // Get the current module
         if let Some(current_module) = crate_data.index.get(&current_module_id.to_string()) {
             // Check if it's a module
@@ -1859,36 +1859,36 @@ fn filter_by_module_path(crate_data: &mut Crate, module_path: &str) -> Result<()
                 }
             }
         }
-        
+
         if !found {
             return Err(anyhow::anyhow!(
-                "Module '{}' not found in the path '{}'", 
-                segment, 
+                "Module '{}' not found in the path '{}'",
+                segment,
                 module_path
             ));
         }
     }
-    
+
     // At this point, current_module_id points to the target module
     // Update the crate's root to point to the target module
     crate_data.root = current_module_id;
-    
+
     // Filter the index to include only items that are part of the target module
     // Start by collecting all items related to the target module
     let mut items_to_keep = std::collections::HashSet::new();
     let mut queue = vec![current_module_id];
-    
+
     // Breadth-first search to find all items in the target module and its submodules
     while let Some(module_id) = queue.pop() {
         items_to_keep.insert(module_id.to_string());
-        
+
         if let Some(module_item) = crate_data.index.get(&module_id.to_string()) {
             if let Some(module_inner) = module_item.inner.get("module") {
                 if let Ok(module_data) = serde_json::from_value::<Module>(module_inner.clone()) {
                     for item_id in &module_data.items {
                         let item_id_str = item_id.to_string();
                         items_to_keep.insert(item_id_str.clone());
-                        
+
                         // If the item is a module, add it to the queue for further traversal
                         if let Some(item) = crate_data.index.get(&item_id_str) {
                             if let Some(inner_obj) = item.inner.as_object() {
@@ -1904,10 +1904,10 @@ fn filter_by_module_path(crate_data: &mut Crate, module_path: &str) -> Result<()
             }
         }
     }
-    
+
     // Remove items that are not part of the target module
     crate_data.index.retain(|k, _| items_to_keep.contains(k));
-    
+
     // Update the crate's name to reflect the module path
     if let Some(root_item) = crate_data.index.get_mut(&crate_data.root.to_string()) {
         if let Some(name) = &mut root_item.name {
@@ -1917,20 +1917,20 @@ fn filter_by_module_path(crate_data: &mut Crate, module_path: &str) -> Result<()
             }
         }
     }
-    
+
     Ok(())
 }
 
 /// Function to load standard library documentation from local rustup installation
 fn load_stdlib_docs(crate_name: &str, toolchain: Option<&str>) -> Result<String> {
     let toolchain = toolchain.unwrap_or("nightly");
-    
+
     // Get target triple for current system
     let target_triple = match get_target_triple() {
         Ok(triple) => triple,
         Err(e) => return Err(e),
     };
-    
+
     let home_dir = match env::var("HOME") {
         Ok(home) => PathBuf::from(home),
         Err(_) => match dirs::home_dir() {
@@ -1947,8 +1947,7 @@ fn load_stdlib_docs(crate_name: &str, toolchain: Option<&str>) -> Result<String>
 
     if json_path.exists() {
         info!("Loading stdlib JSON from: {}", json_path.display());
-        fs::read_to_string(json_path)
-            .context("Failed to read stdlib JSON")
+        fs::read_to_string(json_path).context("Failed to read stdlib JSON")
     } else {
         Err(anyhow::anyhow!(
             "Standard library documentation not found at {}.\n\n\
@@ -1965,7 +1964,7 @@ fn get_target_triple() -> Result<String> {
     let output = std::process::Command::new("rustc")
         .args(&["--version", "--verbose"])
         .output();
-    
+
     match output {
         Ok(output) => {
             let output = String::from_utf8_lossy(&output.stdout);
@@ -1974,34 +1973,47 @@ fn get_target_triple() -> Result<String> {
                     return Ok(line[6..].to_string());
                 }
             }
-            Err(anyhow::anyhow!("Could not determine target triple from rustc output"))
-        },
+            Err(anyhow::anyhow!(
+                "Could not determine target triple from rustc output"
+            ))
+        }
         Err(_) => {
             // Fallback: make a best guess based on OS/arch
             #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
             return Ok("x86_64-unknown-linux-gnu".to_string());
-            
+
             #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
             return Ok("aarch64-unknown-linux-gnu".to_string());
-            
+
             #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
             return Ok("x86_64-apple-darwin".to_string());
-            
+
             #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
             return Ok("aarch64-apple-darwin".to_string());
-            
+
             #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
             return Ok("x86_64-pc-windows-msvc".to_string());
-            
+
             #[cfg(all(target_os = "windows", target_arch = "aarch64"))]
             return Ok("aarch64-pc-windows-msvc".to_string());
-            
+
             #[cfg(not(any(
-                all(target_os = "linux", any(target_arch = "x86_64", target_arch = "aarch64")),
-                all(target_os = "macos", any(target_arch = "x86_64", target_arch = "aarch64")),
-                all(target_os = "windows", any(target_arch = "x86_64", target_arch = "aarch64"))
+                all(
+                    target_os = "linux",
+                    any(target_arch = "x86_64", target_arch = "aarch64")
+                ),
+                all(
+                    target_os = "macos",
+                    any(target_arch = "x86_64", target_arch = "aarch64")
+                ),
+                all(
+                    target_os = "windows",
+                    any(target_arch = "x86_64", target_arch = "aarch64")
+                )
             )))]
-            Err(anyhow::anyhow!("Could not determine target triple for current system"))
+            Err(anyhow::anyhow!(
+                "Could not determine target triple for current system"
+            ))
         }
     }
 }
@@ -2141,7 +2153,9 @@ fn main() -> Result<()> {
                     cli.no_default_features,
                 )?
             } else {
-                return Err(anyhow::anyhow!("Missing --crate-path argument for local crate mode"));
+                return Err(anyhow::anyhow!(
+                    "Missing --crate-path argument for local crate mode"
+                ));
             }
         }
         InputType::LocalFile(path) => {
@@ -2157,7 +2171,10 @@ fn main() -> Result<()> {
                 cli.format_version.as_deref(),
             )?
         }
-        InputType::Stdlib { crate_name, module_path: _ } => {
+        InputType::Stdlib {
+            crate_name,
+            module_path: _,
+        } => {
             // Standard library mode
             load_stdlib_docs(crate_name, cli.toolchain.as_deref())?
         }
@@ -2166,9 +2183,13 @@ fn main() -> Result<()> {
     // Parse the JSON content
     let mut crate_data: Crate =
         serde_json::from_str(&json_content).context("Failed to parse JSON documentation")?;
-    
+
     // If this is a stdlib request with a module path, filter to that module
-    if let InputType::Stdlib { crate_name: _, module_path: Some(ref path) } = input_type {
+    if let InputType::Stdlib {
+        crate_name: _,
+        module_path: Some(ref path),
+    } = input_type
+    {
         filter_by_module_path(&mut crate_data, path)?;
     }
 
