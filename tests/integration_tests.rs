@@ -1,14 +1,48 @@
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
+use tempfile::TempDir;
+
+// Create a temporary directory that will live for the duration of the test
+fn create_test_dir() -> TempDir {
+    tempfile::tempdir().expect("Failed to create temporary directory")
+}
+
+// Generate documentation JSON for a test fixture
+fn generate_fixture_json(fixture_name: &str, temp_dir: &TempDir) -> PathBuf {
+    // Create a path to a file in the temporary directory
+    let fixture_path = temp_dir.path().join(format!("{}.json", fixture_name));
+    
+    // For real tests, we'd generate this by running the app in local-crate mode
+    // But for now, we'll just use the existing JSON fixtures to avoid a circular dependency
+    let source_json_path = format!("tests/{}.json", fixture_name);
+    
+    // Copy the existing JSON file to the temp directory
+    fs::copy(&source_json_path, &fixture_path)
+        .expect(&format!("Failed to copy fixture from {} to {}", source_json_path, fixture_path.display()));
+    
+    fixture_path
+}
+
+// Clean output by removing "Loading file:" lines
+fn clean_output(output: &str) -> String {
+    output.lines()
+        .filter(|line| !line.starts_with("Loading file:"))
+        .collect::<Vec<&str>>()
+        .join("\n")
+}
 
 /// Test doccer against a fixture by comparing output with expected results
 fn test_fixture(fixture_name: &str) {
-    // For these tests, we don't actually parse the JSON files
-    // Instead, we directly use the expected output files
+    let temp_dir = create_test_dir();
+    
+    // Generate the JSON fixture
+    let json_path = generate_fixture_json(fixture_name, &temp_dir);
+    
+    // Get path for expected output
     let expected_path = format!("tests/expected/{}.txt", fixture_name);
 
-    // Ensure the expected output file exists
+    // Ensure expected output file exists
     assert!(
         Path::new(&expected_path).exists(),
         "Expected output file not found: {}",
@@ -18,11 +52,44 @@ fn test_fixture(fixture_name: &str) {
     // Read expected output
     let expected = fs::read_to_string(&expected_path).expect("Failed to read expected output file");
     
-    // For the test purpose, we'll just compare it with itself
-    // These tests are only testing the integrity of our test fixtures
-    if expected.trim() != expected.trim() {
-        panic!("Expected output file does not match itself: {}", expected_path);
-    }
+    // Build the doccer binary first
+    let build_output = Command::new("cargo")
+        .args(["build"])
+        .output()
+        .expect("Failed to build doccer");
+    
+    assert!(
+        build_output.status.success(),
+        "Failed to build doccer: {}",
+        String::from_utf8_lossy(&build_output.stderr)
+    );
+    
+    // Run doccer on the generated fixture file
+    let output = Command::new("./target/debug/doccer")
+        .arg(&json_path)
+        .output()
+        .expect("Failed to execute doccer");
+    
+    // Check that the command succeeded
+    assert!(
+        output.status.success(),
+        "doccer failed to run on {}: {}",
+        json_path.display(),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    
+    let actual_raw = String::from_utf8_lossy(&output.stdout).to_string();
+    
+    // Clean the output by removing the "Loading file:" line
+    let actual = clean_output(&actual_raw);
+    
+    // Compare actual output with expected output
+    assert_eq!(
+        actual.trim(),
+        expected.trim(),
+        "Output for {} doesn't match expected output",
+        fixture_name
+    );
 }
 
 #[test]
@@ -75,7 +142,19 @@ fn test_all_fixtures_exist() {
 /// Test that doccer handles non-existent files gracefully
 #[test]
 fn test_invalid_input() {
-    let output = Command::new("./target/release/doccer")
+    // Ensure debug build exists
+    let build_output = Command::new("cargo")
+        .args(["build"])
+        .output()
+        .expect("Failed to build doccer");
+    
+    assert!(
+        build_output.status.success(),
+        "Failed to build doccer: {}",
+        String::from_utf8_lossy(&build_output.stderr)
+    );
+
+    let output = Command::new("./target/debug/doccer")
         .arg("nonexistent.json")
         .output()
         .expect("Failed to execute doccer");
@@ -87,7 +166,19 @@ fn test_invalid_input() {
 /// Test that doccer requires an input argument
 #[test]
 fn test_missing_argument() {
-    let output = Command::new("./target/release/doccer")
+    // Ensure debug build exists
+    let build_output = Command::new("cargo")
+        .args(["build"])
+        .output()
+        .expect("Failed to build doccer");
+    
+    assert!(
+        build_output.status.success(),
+        "Failed to build doccer: {}",
+        String::from_utf8_lossy(&build_output.stderr)
+    );
+
+    let output = Command::new("./target/debug/doccer")
         .output()
         .expect("Failed to execute doccer");
 
@@ -161,8 +252,20 @@ fn test_local_crate_command_parsing() {
     let temp_file = temp_dir.path().join("sample.json");
     fs::write(&temp_file, json_content).expect("Failed to write sample JSON file");
     
+    // Ensure debug build exists
+    let build_output = Command::new("cargo")
+        .args(["build"])
+        .output()
+        .expect("Failed to build doccer");
+    
+    assert!(
+        build_output.status.success(),
+        "Failed to build doccer: {}",
+        String::from_utf8_lossy(&build_output.stderr)
+    );
+
     // Verify we can read this file directly
-    let output = Command::new("./target/release/doccer")
+    let output = Command::new("./target/debug/doccer")
         .arg(&temp_file)
         .output()
         .expect("Failed to run doccer with sample JSON file");
@@ -185,7 +288,7 @@ fn test_local_crate_command_parsing() {
     );
     
     // Test for expected command-line help output
-    let help_output = Command::new("./target/release/doccer")
+    let help_output = Command::new("./target/debug/doccer")
         .args(["local-crate", "--help"])
         .output()
         .expect("Failed to run doccer local-crate --help");

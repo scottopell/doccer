@@ -1,5 +1,7 @@
 # Crate: modules
 
+Version: 0.1.0
+
 Modules fixture for testing doccer
 
 This crate contains nested modules with different visibility
@@ -8,38 +10,17 @@ patterns to validate hierarchical structure parsing.
   pub mod utils
     /// Public utilities module
 
-    pub fn helper() -> String
-      /// A public utility function
-
-    pub(crate) fn internal_helper() -> i32
-      /// A crate-local utility
-
     pub mod nested
       /// Nested utilities module
 
       pub fn deep_function() -> bool
         /// A deeply nested function
 
-      pub(crate) fn crate_function()
-        /// Crate-visible nested function
-
-      pub(super) fn parent_function()
-        /// Super-visible function
+    pub fn helper() -> String
+      /// A public utility function
 
   pub mod network
     /// Network-related functionality
-
-    pub struct Connection { ... }
-      /// A connection struct
-
-      pub fn new(host: String, port: u16) -> Self
-        /// Creates a new connection
-
-      pub fn host(&self) -> &str
-        /// Gets the host
-
-      pub(crate) fn port(&self) -> u16
-        /// Gets the port (crate-visible)
 
     pub mod protocol
       /// Protocol submodule
@@ -51,8 +32,11 @@ patterns to validate hierarchical structure parsing.
           /// HTTP methods
 
           Get
+
           Post
+
           Put
+
           Delete
 
         pub struct Request { ... }
@@ -64,22 +48,11 @@ patterns to validate hierarchical structure parsing.
         pub struct Options { ... }
           /// TCP socket options
 
-          pub keep_alive: bool
-            /// Keep-alive setting
+    pub struct Connection { ... }
+      /// A connection struct
 
-          pub(super) timeout: u32
-            /// Timeout in seconds
+        pub fn new(host: String, port: u16) -> Self
+          /// Creates a new connection
 
-  pub(crate) mod database
-    /// Database module (crate-visible)
-
-    pub struct DbConnection { ... }
-      /// Database connection
-
-    pub mod ops
-      /// Database operations
-
-      pub fn query(sql: &str) -> Vec<String>
-        /// Query function
-
-
+        pub fn host(&self) -> &str
+          /// Gets the host

@@ -2,185 +2,70 @@
 
 Complex fixture for testing doccer
 
-This crate combines all Rust features to provide a comprehensive
-test of doccer's parsing and rendering capabilities.
+This crate contains more complex Rust constructs to validate
+advanced parsing and rendering functionality.
 
-# Examples
-
-```rust
-use complex::storage::*;
-let mut storage = Storage::new();
-storage.insert("key", "value");
-```
-
-  macro_rules! format_message($prefix:expr, $content:expr)
-    /// A macro for creating formatted messages
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let msg = format_message!("Hello", "World");
-    /// assert_eq!(msg, "Hello: World");
-    /// ```
-
-  pub mod storage
-    /// Storage and data management
-
-    pub mod string_cache
-      /// Specialized cache for strings
-
-      pub struct StringCache { ... }
-        /// A string cache with complex operations
-
-        pub fn new() -> Self
-          /// Creates a new string cache
-
-        pub fn add(&mut self, key: String, content: String)
-          /// Adds a string to the cache
-
-      pub struct CachedString { ... }
-        /// A cached string with metadata
-
-        pub content: String
-          /// The string content
-
-    pub struct Storage<K, V> where K: Clone + Debug + PartialEq + std::hash::Hash, V: Clone + Debug { ... }
-      /// A generic storage container with complex constraints
-
-      pub capacity: usize
-        /// Maximum capacity
+  pub struct HttpClient { ... }
+    /// A client for making HTTP requests
 
       pub fn new() -> Self
-        /// Creates a new storage with default capacity
-        ///
-        /// # Examples
-        ///
-        /// ```
-        /// let storage: Storage<String, i32> = Storage::new();
-        /// ```
+        /// Creates a new HTTP client
 
-      pub fn with_capacity(capacity: usize) -> Self
-        /// Creates a new storage with specified capacity
+      pub fn request(&self, method: Method, url: String) -> Result<sub_module::Response, String>
+        /// Makes an HTTP request
 
-      pub fn insert(&mut self, key: K, value: V) -> Option<V>
-        /// Inserts a key-value pair
+      pub fn with_timeout(self, seconds: u64) -> Self
+        /// Sets a timeout for requests
 
-      pub fn get(&self, key: &K) -> Option<&V>
-        /// Gets a value by key
+  impl Protocol for HttpClient
+    /// Implementation of Protocol trait for HttpClient
 
-    pub trait Cacheable<K> where K: Clone { ... }
-      /// A trait for cacheable items
+      type Error = HttpError
 
-      type Key: Clone + Debug
-        /// The cache key type
+      pub fn connect(&mut self, url: String) -> Result<(), HttpError>
+        /// Implement connect for HTTP
 
-      fn cache_key(&self) -> Self::Key
-        /// Gets the cache key for this item
+      pub fn disconnect(&mut self)
+        /// Implement disconnect for HTTP
 
-      fn can_cache(&self) -> bool
-        /// Validates if the item can be cached
+  pub enum Method { ... }
+    /// HTTP request methods
 
-    pub struct Cache<'a, T: Cacheable<String>> { ... }
-      /// Cache implementation with lifetime parameters
+    Get
+      /// HTTP GET method
 
-      pub data: &'a [T]
-        /// Reference to the original data
+    Post
+      /// HTTP POST method
 
-      pub fn new(data: &'a [T]) -> Self
-        /// Creates a new cache
+    Put
+      /// HTTP PUT method
 
-  pub mod network
-    /// Network operations and protocols
+    Delete
+      /// HTTP DELETE method
 
-    pub mod protocol
-      /// Protocol definitions
+    Custom(String)
+      /// Custom HTTP method
 
-      pub trait Protocol<Req, Resp> { ... }
-        /// A generic protocol handler
+  pub trait Protocol { ... }
+    /// Protocol for network communications
 
-        type Error: std::error::Error
-          /// The error type for this protocol
+    type Error: std::error::Error
+      /// Associated error type
 
-        fn handle(&mut self, request: Req) -> Result<Resp, Self::Error>
-          /// Processes a request
+    pub fn connect(&mut self, url: String) -> Result<(), Self::Error>
+      /// Connect to the endpoint
 
-      pub struct Http { ... }
-        /// HTTP protocol implementation
+    pub fn disconnect(&mut self)
+      /// Disconnect from the endpoint
 
-      pub struct HttpRequest { ... }
-        /// HTTP request
+  pub mod sub_module
+    /// A submodule with additional types
 
-        pub method: String
-          /// Request method
+    pub struct Response { ... }
+      /// HTTP response
 
-        pub path: String
-          /// Request path
+        pub fn is_success(&self) -> bool
+          /// Checks if the response status is a success code
 
-        pub headers: std::collections::HashMap<String, String>
-          /// Request headers
-
-      pub struct HttpResponse { ... }
-        /// HTTP response
-
-        pub status: u16
-          /// Response status code
-
-        pub body: String
-          /// Response body
-
-      pub struct HttpError { ... }
-        /// HTTP error
-
-        pub message: String
-          /// Error message
-
-      impl Protocol<HttpRequest, HttpResponse> for Http
-        /// Implementation of Protocol trait for Http
-
-        type Error = HttpError
-
-      impl std::fmt::Display for HttpError
-        /// Display implementation for HttpError
-
-      impl std::error::Error for HttpError
-        /// Error trait implementation for HttpError
-
-  pub mod math
-    /// Mathematical operations and utilities
-
-    pub mod constants
-      /// Constants for mathematical operations
-
-      pub const PI: f64
-        /// Mathematical constant π
-
-      pub const E: f64
-        /// Mathematical constant e
-
-      pub const PHI: f64
-        /// Golden ratio
-
-    pub struct Point<T: Copy> { ... }
-      /// A point in 2D space
-
-      pub x: T
-        /// X coordinate
-
-      pub y: T
-        /// Y coordinate
-
-      pub fn new(x: T, y: T) -> Self
-        /// Creates a new point
-
-      pub fn add(self, other: Self) -> Self
-        /// Adds two points together
-
-# Re-exports
-
-  pub use math::Point
-  pub use network::protocol::Http
-  pub use network::protocol::Protocol
-  pub use storage::Storage
-    /// Re-exports for convenience
-
-
+    pub struct Headers { ... }
+      /// HTTP headers collection

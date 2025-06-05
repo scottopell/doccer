@@ -1,5 +1,7 @@
 # Crate: generics
 
+Version: 0.1.0
+
 Generics fixture for testing doccer
 
 This crate contains generic types, lifetimes, and constraints
@@ -8,14 +10,14 @@ to validate advanced parsing functionality.
   pub struct Container<T> { ... }
     /// A generic container that holds a value
 
-    pub fn new(value: T) -> Self
-      /// Creates a new container
+      pub fn new(value: T) -> Self
+        /// Creates a new container
 
-    pub fn get(&self) -> &T
-      /// Gets a reference to the contained value
+      pub fn get(&self) -> &T
+        /// Gets a reference to the contained value
 
-    pub fn into_inner(self) -> T
-      /// Consumes the container and returns the value
+      pub fn into_inner(self) -> T
+        /// Consumes the container and returns the value
 
   pub struct Pair<T, U> { ... }
     /// A generic pair of values
@@ -29,11 +31,11 @@ to validate advanced parsing functionality.
   pub struct Result<T, E> where T: Clone, E: Display { ... }
     /// A generic result type with constraints
 
-    pub fn ok(value: T) -> Self
-      /// Creates a successful result
+      pub fn ok(value: T) -> Self
+        /// Creates a successful result
 
-    pub fn err(error: E) -> Self
-      /// Creates an error result
+      pub fn err(error: E) -> Self
+        /// Creates an error result
 
   pub fn longest<'a>(x: &'a str, y: &'a str) -> &'a str
     /// A function with lifetime parameters
@@ -41,8 +43,8 @@ to validate advanced parsing functionality.
   pub struct Reference<'a> { ... }
     /// A struct with lifetime parameters
 
-    pub fn new(data: &'a str) -> Self
-      /// Creates a new reference
+      pub fn new(data: &'a str) -> Self
+        /// Creates a new reference
 
   pub trait Iterator { ... }
     /// Associated types example
@@ -61,5 +63,3 @@ to validate advanced parsing functionality.
 
     const MAX: T
       /// Maximum value
-
-

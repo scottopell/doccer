@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::fs;
-use std::io::{self, Read};
+use std::io;
 use std::path::PathBuf;
 
 // Core data structures for modern rustdoc JSON format
@@ -14,23 +14,30 @@ struct Crate {
     #[serde(default)]
     crate_version: Option<String>,
     #[serde(default)]
+    #[allow(dead_code)] // Preserved to match rustdoc JSON format
     includes_private: bool,
     index: HashMap<String, Item>,
     #[serde(default)]
+    #[allow(dead_code)] // Preserved to match rustdoc JSON format
     paths: serde_json::Value, // Make this flexible
     #[serde(default)]
+    #[allow(dead_code)] // Preserved to match rustdoc JSON format
     external_crates: serde_json::Value, // Make this flexible
     #[serde(default)]
+    #[allow(dead_code)] // Preserved to match rustdoc JSON format
     format_version: u32,
 }
 
 #[derive(Debug, Deserialize)]
 struct ExternalCrate {
+    #[allow(dead_code)] // Preserved to match rustdoc JSON format
     name: String,
+    #[allow(dead_code)] // Preserved to match rustdoc JSON format
     html_root_url: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)] // This struct is not used but preserved for documentation purposes
 struct ItemSummary {
     crate_id: u32,
     path: Vec<String>,
@@ -40,11 +47,14 @@ struct ItemSummary {
 #[derive(Debug, Deserialize)]
 struct Item {
     id: Option<u32>,
+    #[allow(dead_code)] // Preserved to match rustdoc JSON format
     crate_id: u32,
     name: Option<String>,
+    #[allow(dead_code)] // Preserved to match rustdoc JSON format
     span: Option<Span>,
     visibility: Visibility,
     docs: Option<String>,
+    #[allow(dead_code)] // Preserved to match rustdoc JSON format
     links: HashMap<String, serde_json::Value>,
     attrs: Vec<String>,
     deprecation: Option<Deprecation>,
@@ -55,30 +65,40 @@ struct Item {
 #[serde(untagged)]
 enum Visibility {
     Simple(String),
-    Restricted { restricted: RestrictedVisibility },
+    Restricted { 
+        #[allow(dead_code)] // Preserved to match rustdoc JSON format
+        restricted: RestrictedVisibility 
+    },
 }
 
 #[derive(Debug, Deserialize)]
 struct RestrictedVisibility {
+    #[allow(dead_code)] // Preserved to match rustdoc JSON format
     parent: String,
+    #[allow(dead_code)] // Preserved to match rustdoc JSON format
     path: String,
 }
 
 #[derive(Debug, Deserialize)]
 struct Span {
+    #[allow(dead_code)] // Preserved to match rustdoc JSON format
     filename: String,
+    #[allow(dead_code)] // Preserved to match rustdoc JSON format
     begin: (u32, u32),
+    #[allow(dead_code)] // Preserved to match rustdoc JSON format
     end: (u32, u32),
 }
 
 #[derive(Debug, Deserialize)]
 struct Deprecation {
     since: Option<String>,
+    #[allow(dead_code)] // Preserved to match rustdoc JSON format
     note: Option<String>,
 }
 
 // Simplified structures for the modern format
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)] // This struct is not currently used but kept for future extensibility
 struct ModernFunction {
     sig: serde_json::Value,
     generics: serde_json::Value,
@@ -87,6 +107,7 @@ struct ModernFunction {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)] // This struct is not currently used but kept for future extensibility
 struct ModernStruct {
     kind: serde_json::Value,
     generics: serde_json::Value,
@@ -95,8 +116,10 @@ struct ModernStruct {
 
 #[derive(Debug, Deserialize)]
 struct Module {
+    #[allow(dead_code)] // Preserved to match rustdoc JSON format
     is_crate: Option<bool>,
     items: Vec<u32>,
+    #[allow(dead_code)] // Preserved to match rustdoc JSON format
     is_stripped: Option<bool>,
 }
 
@@ -699,7 +722,7 @@ impl TextRenderer {
         if let Some(name) = &item.name {
             if name == "Error" {
                 // Check if this is within a trait implementation
-                if let Some(parent_id) = item.id {
+                if let Some(_parent_id) = item.id {
                     // Find parent item
                     if let Some(bounds) = assoc_type_data.get("bounds").and_then(|b| b.as_array()) {
                         if !bounds.is_empty() {
@@ -1543,99 +1566,9 @@ enum Commands {
 
 /// Function to handle loading a documentation JSON from a file
 fn load_from_file(file_path: &PathBuf) -> Result<String> {
-    // Special cases for test fixtures
-    let file_path_str = file_path.to_string_lossy();
+    println!("Loading file: {}", file_path.to_string_lossy());
     
-    println!("Loading file: {}", file_path_str);
-    
-    // This specific handling is for tests that don't contain valid JSON 
-    // but need to return expected outputs for test fixtures
-    if file_path_str.contains("tests/complex.json") {
-        // Output the expected fixture output directly
-        return fs::read_to_string("tests/expected/complex.txt")
-            .context("Failed to read complex.txt test fixture");
-    } else if file_path_str.contains("tests/basic_types.json") {
-        // Output the expected fixture output directly
-        return fs::read_to_string("tests/expected/basic_types.txt")
-            .context("Failed to read basic_types.txt test fixture");
-    } else if file_path_str.contains("tests/generics.json") {
-        // Since we have test issues with the generics.json fixture, we'll directly output
-        // the expected content without parsing the JSON
-        return Ok(String::from("# Crate: generics
-
-Generics fixture for testing doccer
-
-This crate contains generic types, lifetimes, and constraints
-to validate advanced parsing functionality.
-
-  pub struct Container<T> { ... }
-    /// A generic container that holds a value
-
-    pub fn new(value: T) -> Self
-      /// Creates a new container
-
-    pub fn get(&self) -> &T
-      /// Gets a reference to the contained value
-
-    pub fn into_inner(self) -> T
-      /// Consumes the container and returns the value
-
-  pub struct Pair<T, U> { ... }
-    /// A generic pair of values
-
-  pub trait Comparable<T> { ... }
-    /// A trait for types that can be compared
-
-    fn compare(&self, other: &T) -> std::cmp::Ordering
-      /// Compare this value with another
-
-  pub struct Result<T, E> where T: Clone, E: Display { ... }
-    /// A generic result type with constraints
-
-    pub fn ok(value: T) -> Self
-      /// Creates a successful result
-
-    pub fn err(error: E) -> Self
-      /// Creates an error result
-
-  pub fn longest<'a>(x: &'a str, y: &'a str) -> &'a str
-    /// A function with lifetime parameters
-
-  pub struct Reference<'a> { ... }
-    /// A struct with lifetime parameters
-
-    pub fn new(data: &'a str) -> Self
-      /// Creates a new reference
-
-  pub trait Iterator { ... }
-    /// Associated types example
-
-    type Item
-      /// The type of items yielded by the iterator
-
-    fn next(&mut self) -> Option<Self::Item>
-      /// Get the next item
-
-  pub trait Constants<T> { ... }
-    /// Generic associated constants
-
-    const DEFAULT: T
-      /// A default value
-
-    const MAX: T
-      /// Maximum value
-"));
-    } else if file_path_str.contains("tests/modules.json") {
-        // Output the expected fixture output directly
-        return fs::read_to_string("tests/expected/modules.txt")
-            .context("Failed to read modules.txt test fixture");
-    } else if file_path_str.contains("tests/deprecation.json") {
-        // Output the expected fixture output directly
-        return fs::read_to_string("tests/expected/deprecation.txt")
-            .context("Failed to read deprecation.txt test fixture");
-    }
-
-    // Regular case: read the JSON file
+    // Read the JSON file
     fs::read_to_string(file_path)
         .with_context(|| format!("Failed to read file: {}", file_path.display()))
 }
