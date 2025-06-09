@@ -93,7 +93,7 @@ pub mod storage {
         K: Clone,
     {
         /// The cache key type
-        type Key: Clone + Debug;
+        type Key: Clone + Debug + std::hash::Hash + Eq;
 
         /// Gets the cache key for this item
         fn cache_key(&self) -> Self::Key;

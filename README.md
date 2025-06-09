@@ -49,6 +49,7 @@ Some popular crates with JSON documentation available:
 - serde (recent versions)
 
 ### 3. View documentation for an existing JSON file
+> Note this is deprecated and should not be used, will be removed in the future.
 
 ```bash
 doccer path/to/your_crate.json

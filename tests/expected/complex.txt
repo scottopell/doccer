@@ -15,195 +15,211 @@ let mut storage = Storage::new();
 storage.insert("key", "value");
 ```
 
+  /// A macro for creating formatted messages
+  ///
+  /// # Examples
+  ///
+  /// ```
+  /// let msg = format_message!("Hello", "World");
+  /// assert_eq!(msg, "Hello: World");
+  /// ```
   macro_rules! format_message($prefix:expr, $content:expr)
-    /// A macro for creating formatted messages
-    /// 
-    /// # Examples
-    /// 
-    /// ```
-    /// let msg = format_message!("Hello", "World");
-    /// assert_eq!(msg, "Hello: World");
-    /// ```
 
+  /// Storage and data management
   pub mod storage
-    /// Storage and data management
 
+    /// Specialized cache for strings
     pub mod string_cache
-      /// Specialized cache for strings
 
-      pub struct StringCache { ... }
-        /// A string cache with complex operations
+      /// A string cache with complex operations
+      pub struct StringCache {
 
-          pub fn new() -> Self
-            /// Creates a new string cache
-
-          pub fn add(&mut self, key: String, content: String)
-            /// Adds a string to the cache
-
-      pub struct CachedString { ... }
-        /// A cached string with metadata
-
-      impl Clone for CachedString
-        /// Implementation of Clone trait for CachedString
-
-          fn clone(&self) -> CachedString
-
-      impl Debug for CachedString
-        /// Implementation of Debug trait for CachedString
-
-          fn fmt(&self, f: &mut $crate::fmt::Formatter<'_>) -> $crate::fmt::Result
-
-    pub struct Storage<K, V> where K: Clone + Debug + PartialEq + std::hash::Hash, V: Clone + Debug { ... }
-      /// A generic storage container with complex constraints
-
+        /// Creates a new string cache
         pub fn new() -> Self
-          /// Creates a new storage with default capacity
-          /// 
-          /// # Examples
-          /// 
-          /// ```
-          /// let storage: Storage<String, i32> = Storage::new();
-          /// ```
 
-        pub fn with_capacity(capacity: usize) -> Self
-          /// Creates a new storage with specified capacity
+        /// Adds a string to the cache
+        pub fn add(&mut self, key: String, content: String)
+      }
 
-        pub fn insert(&mut self, key: K, value: V) -> Option<V>
-          /// Inserts a key-value pair
+      /// A cached string with metadata
+      pub struct CachedString {
+      }
 
-        pub fn get(&self, key: &K) -> Option<&V>
-          /// Gets a value by key
+      /// Implementation of Clone trait for CachedString
+      impl Clone for CachedString {
 
-    pub trait Cacheable<K> where K: Clone { ... }
-      /// A trait for cacheable items
+        fn clone(&self) -> CachedString
+      }
 
-      type Key: Clone + Debug
-        /// The cache key type
-
-      fn cache_key(&self) -> Self::Key
-        /// Gets the cache key for this item
-
-      fn can_cache(&self) -> bool
-        /// Validates if the item can be cached
-
-    pub struct Cache<'a, T: Cacheable> { ... }
-      /// Cache implementation with lifetime parameters
-
-        pub fn new(data: &'a [T]) -> Self
-          /// Creates a new cache
-
-  pub mod network
-    /// Network operations and protocols
-
-    pub mod protocol
-      /// Protocol definitions
-
-      pub trait Protocol<Req, Resp> { ... }
-        /// A generic protocol handler
-
-        type Error: std::error::Error
-          /// The error type for this protocol
-
-        fn handle(&mut self, request: Req) -> Result<Resp, Self::Error>
-          /// Processes a request
-
-      pub struct Http { ... }
-        /// HTTP protocol implementation
-
-      impl Protocol<HttpRequest, HttpResponse> for Http
-        /// Implementation of Protocol trait for Http
-
-          type Error = HttpError
-
-          fn handle(&mut self, request: HttpRequest) -> Result<HttpResponse, Self::Error>
-
-      pub struct HttpRequest { ... }
-        /// HTTP request
-
-      impl Protocol<HttpRequest, HttpResponse> for Http
-        /// Implementation of Protocol trait for Http
-
-          type Error = HttpError
-
-          fn handle(&mut self, request: HttpRequest) -> Result<HttpResponse, Self::Error>
-
-      pub struct HttpResponse { ... }
-        /// HTTP response
-
-      impl Protocol<HttpRequest, HttpResponse> for Http
-        /// Implementation of Protocol trait for Http
-
-          type Error = HttpError
-
-          fn handle(&mut self, request: HttpRequest) -> Result<HttpResponse, Self::Error>
-
-      pub struct HttpError { ... }
-        /// HTTP error
-
-      impl Debug for HttpError
-        /// Implementation of Debug trait for HttpError
-
-          fn fmt(&self, f: &mut $crate::fmt::Formatter<'_>) -> $crate::fmt::Result
-
-      impl Display for HttpError
-        /// Implementation of Display trait for HttpError
-
-          fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
-
-      impl Error for HttpError
-        /// Implementation of Error trait for HttpError
-
-  pub mod math
-    /// Mathematical operations and utilities
-
-    pub mod constants
-      /// Constants for mathematical operations
-
-      pub const PI: f64
-        /// Mathematical constant π
-
-      pub const E: f64
-        /// Mathematical constant e
-
-      pub const PHI: f64
-        /// Golden ratio
-
-    pub struct Point<T: Copy> { ... }
-      /// A point in 2D space
-
-        pub fn new(x: T, y: T) -> Self
-          /// Creates a new point
-
-        pub fn add(self, other: Self) -> Self
-          /// Adds two points together
-
-    impl Debug for Point<T>
-      /// Implementation of Debug trait for Point
+      /// Implementation of Debug trait for CachedString
+      impl Debug for CachedString {
 
         fn fmt(&self, f: &mut $crate::fmt::Formatter<'_>) -> $crate::fmt::Result
+      }
 
-    impl Clone for Point<T>
-      /// Implementation of Clone trait for Point
+    /// A generic storage container with complex constraints
+    pub struct Storage<K, V> where K: Clone + Debug + PartialEq + std::hash::Hash, V: Clone + Debug {
 
-        fn clone(&self) -> Point<T>
+      /// Creates a new storage with default capacity
+      ///
+      /// # Examples
+      ///
+      /// ```
+      /// let storage: Storage<String, i32> = Storage::new();
+      /// ```
+      pub fn new() -> Self
 
+      /// Creates a new storage with specified capacity
+      pub fn with_capacity(capacity: usize) -> Self
+
+      /// Inserts a key-value pair
+      pub fn insert(&mut self, key: K, value: V) -> Option<V>
+
+      /// Gets a value by key
+      pub fn get(&self, key: &K) -> Option<&V>
+    }
+
+    /// A trait for cacheable items
+    pub trait Cacheable<K> where K: Clone {
+
+      /// The cache key type
+      type Key: Clone + Debug
+
+      /// Gets the cache key for this item
+    fn cache_key(&self) -> Self::Key
+
+      /// Validates if the item can be cached
+    fn can_cache(&self) -> bool
+    }
+
+    /// Cache implementation with lifetime parameters
+    pub struct Cache<'a, T: Cacheable> {
+
+      /// Creates a new cache
+      pub fn new(data: &'a [T]) -> Self
+    }
+
+  /// Network operations and protocols
+  pub mod network
+
+    /// Protocol definitions
+    pub mod protocol
+
+      /// A generic protocol handler
+      pub trait Protocol<Req, Resp> {
+
+        /// The error type for this protocol
+        type Error: std::error::Error
+
+        /// Processes a request
+        fn handle(&mut self, request: Req) -> Result<Resp, Self::Error>
+      }
+
+      /// HTTP protocol implementation
+      pub struct Http {
+      }
+
+      /// Implementation of Protocol trait for Http
+      impl Protocol<HttpRequest, HttpResponse> for Http {
+
+        type Error = HttpError
+
+        fn handle(&mut self, request: HttpRequest) -> Result<HttpResponse, Self::Error>
+      }
+
+      /// HTTP request
+      pub struct HttpRequest {
+      }
+
+      /// Implementation of Protocol trait for Http
+      impl Protocol<HttpRequest, HttpResponse> for Http {
+
+        type Error = HttpError
+
+        fn handle(&mut self, request: HttpRequest) -> Result<HttpResponse, Self::Error>
+      }
+
+      /// HTTP response
+      pub struct HttpResponse {
+      }
+
+      /// Implementation of Protocol trait for Http
+      impl Protocol<HttpRequest, HttpResponse> for Http {
+
+        type Error = HttpError
+
+        fn handle(&mut self, request: HttpRequest) -> Result<HttpResponse, Self::Error>
+      }
+
+      /// HTTP error
+      pub struct HttpError {
+      }
+
+      /// Implementation of Debug trait for HttpError
+      impl Debug for HttpError {
+
+        fn fmt(&self, f: &mut $crate::fmt::Formatter<'_>) -> $crate::fmt::Result
+      }
+
+      /// Implementation of Display trait for HttpError
+      impl Display for HttpError {
+
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
+      }
+
+      /// Implementation of Error trait for HttpError
+      impl Error for HttpError
+
+  /// Mathematical operations and utilities
+  pub mod math
+
+    /// Constants for mathematical operations
+    pub mod constants
+
+      /// Mathematical constant π
+      pub const PI: f64
+
+      /// Mathematical constant e
+      pub const E: f64
+
+      /// Golden ratio
+      pub const PHI: f64
+
+    /// A point in 2D space
+    pub struct Point<T: Copy> {
+
+      /// Creates a new point
+      pub fn new(x: T, y: T) -> Self
+
+      /// Adds two points together
+      pub fn add(self, other: Self) -> Self
+    }
+
+    /// Implementation of Debug trait for Point
+    impl Debug for Point<T> {
+
+    fn fmt(&self, f: &mut $crate::fmt::Formatter<'_>) -> $crate::fmt::Result
+    }
+
+    /// Implementation of Clone trait for Point
+    impl Clone for Point<T> {
+
+    fn clone(&self) -> Point<T>
+    }
+
+    /// Implementation of Copy trait for Point
     impl Copy for Point<T>
-      /// Implementation of Copy trait for Point
 
-    impl StructuralPartialEq for Point<T>
-      /// Implementation of StructuralPartialEq trait for Point
+    /// Implementation of PartialEq trait for Point
+    impl PartialEq for Point<T> {
 
-    impl PartialEq for Point<T>
-      /// Implementation of PartialEq trait for Point
-
-        fn eq(&self, other: &Point<T>) -> bool
+    fn eq(&self, other: &Point<T>) -> bool
+    }
 
 # Re-exports
 
+  /// Re-exports for convenience
   pub use math::Point
   pub use network::protocol::Http
   pub use network::protocol::Protocol
   pub use storage::Storage
-    /// Re-exports for convenience
-
-

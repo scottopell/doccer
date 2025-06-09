@@ -15,10 +15,8 @@ patterns to validate hierarchical structure parsing.
 
       /// A deeply nested function
       pub fn deep_function() -> bool
-
     /// A public utility function
     pub fn helper() -> String
-
   /// Network-related functionality
   pub mod network
 
@@ -42,6 +40,7 @@ patterns to validate hierarchical structure parsing.
 
         /// HTTP request structure
         pub struct Request {
+
         }
 
       /// TCP-specific functionality
@@ -49,14 +48,17 @@ patterns to validate hierarchical structure parsing.
 
         /// TCP socket options
         pub struct Options {
+
         }
 
     /// A connection struct
     pub struct Connection {
 
-      /// Creates a new connection
-      pub fn new(host: String, port: u16) -> Self
+        /// Creates a new connection
+        pub fn new(host: String, port: u16) -> Self
 
-      /// Gets the host
-      pub fn host(&self) -> &str
+        /// Gets the host
+        pub fn host(&self) -> &str
     }
+
+

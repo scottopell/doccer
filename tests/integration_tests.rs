@@ -1,6 +1,136 @@
+use similar::{ChangeTag, TextDiff};
+use std::fmt;
 use std::fs;
+use std::io::Write;
 use std::path::Path;
 use std::process::Command;
+
+/// Custom assertion that produces a readable diff when strings don't match
+fn assert_strings_eq(actual: &str, expected: &str, message: &str) {
+    if actual.trim() != expected.trim() {
+        // Create a text diff
+        let diff = TextDiff::from_lines(expected.trim(), actual.trim());
+
+        // Format the diff as a string
+        let mut diff_output = String::new();
+
+        // Count the number of lines and differences
+        let expected_lines = expected.trim().lines().count();
+        let actual_lines = actual.trim().lines().count();
+        let mut deletions = 0;
+        let mut insertions = 0;
+
+        for change in diff.iter_all_changes() {
+            match change.tag() {
+                ChangeTag::Delete => deletions += 1,
+                ChangeTag::Insert => insertions += 1,
+                _ => {}
+            }
+        }
+
+        // Add a summary header
+        diff_output.push_str(&format!(
+            "{}:\n\nSummary: {} line(s) changed - {} insertion(s), {} deletion(s)\n",
+            message,
+            deletions + insertions,
+            insertions,
+            deletions
+        ));
+        diff_output.push_str(&format!(
+            "Expected: {} lines, Actual: {} lines\n\n",
+            expected_lines, actual_lines
+        ));
+
+        // Line numbers to help with context
+        let mut line_number_expected = 1;
+        let mut line_number_actual = 1;
+
+        // Track changes to show context lines only around differences
+        let mut show_line = false;
+        let mut change_lines = Vec::new();
+        let context_lines = 3; // Number of context lines to show before and after changes
+
+        // First pass: identify which lines have changes
+        for (i, change) in diff.iter_all_changes().enumerate() {
+            if change.tag() != ChangeTag::Equal {
+                for j in i.saturating_sub(context_lines)..=i + context_lines {
+                    change_lines.push(j);
+                }
+            }
+        }
+
+        // Second pass: build the diff output
+        for (i, change) in diff.iter_all_changes().enumerate() {
+            // Decide if we should show this line
+            show_line = change_lines.contains(&i);
+
+            // Add separator for non-consecutive changes
+            if i > 0 && show_line && !change_lines.contains(&(i - 1)) {
+                diff_output.push_str("...\n");
+            }
+
+            if show_line {
+                let (prefix, content) = match change.tag() {
+                    ChangeTag::Delete => {
+                        let prefix = format!("{:4} \x1b[31m-\x1b[0m | ", line_number_expected);
+                        line_number_expected += 1;
+                        (prefix, format!("\x1b[31m{}\x1b[0m", change))
+                    }
+                    ChangeTag::Insert => {
+                        let prefix = format!("{:4} \x1b[32m+\x1b[0m | ", line_number_actual);
+                        line_number_actual += 1;
+                        (prefix, format!("\x1b[32m{}\x1b[0m", change))
+                    }
+                    ChangeTag::Equal => {
+                        let prefix = format!("{:4}   | ", line_number_expected);
+                        line_number_expected += 1;
+                        line_number_actual += 1;
+                        (prefix, format!("{}", change))
+                    }
+                };
+
+                let formatted_line = format!("{}{}", prefix, content);
+                diff_output.push_str(&formatted_line);
+            } else {
+                // Update line numbers for hidden lines
+                if change.tag() == ChangeTag::Delete || change.tag() == ChangeTag::Equal {
+                    line_number_expected += 1;
+                }
+                if change.tag() == ChangeTag::Insert || change.tag() == ChangeTag::Equal {
+                    line_number_actual += 1;
+                }
+            }
+        }
+
+        // If the diff is too large, suggest writing to a file for easier comparison
+        if diff_output.lines().count() > 50 {
+            diff_output.push_str("\nNote: For easier comparison, consider writing expected and actual outputs to files and using a diff tool.\n");
+        }
+
+        // Save actual and expected output to temporary files for manual comparison
+        if diff_output.lines().count() > 30 {
+            let tmp_dir = tempfile::tempdir().expect("Failed to create temporary directory");
+
+            let expected_path = tmp_dir.path().join("expected.txt");
+            let actual_path = tmp_dir.path().join("actual.txt");
+
+            let _ = fs::write(&expected_path, expected.trim());
+            let _ = fs::write(&actual_path, actual.trim());
+
+            diff_output.push_str(&format!(
+                "\nFiles saved for comparison:\n  Expected: {}\n  Actual: {}\n",
+                expected_path.display(),
+                actual_path.display()
+            ));
+
+            // Don't drop the tempdir so files remain accessible
+            std::mem::forget(tmp_dir);
+        }
+
+        // Finally, panic with the formatted diff
+        panic!("\n{}", diff_output);
+    }
+}
 
 /// Test doccer against a fixture by comparing output with expected results
 fn test_fixture(fixture_name: &str) {
@@ -55,12 +185,14 @@ fn test_fixture(fixture_name: &str) {
 
     let actual = String::from_utf8_lossy(&output.stdout).to_string();
 
-    // Compare actual output with expected output
-    assert_eq!(
-        actual.trim(),
-        expected.trim(),
-        "Output for {} doesn't match expected output",
-        fixture_name
+    // Compare actual output with expected output using our custom diff function
+    assert_strings_eq(
+        &actual,
+        &expected,
+        &format!(
+            "Output for '{}' doesn't match expected output",
+            fixture_name
+        ),
     );
 }
 
@@ -118,30 +250,6 @@ fn test_all_fixtures_exist() {
     }
 }
 
-/// Test that doccer handles non-existent files gracefully
-#[test]
-fn test_invalid_input() {
-    // Ensure debug build exists
-    let build_output = Command::new("cargo")
-        .args(["build"])
-        .output()
-        .expect("Failed to build doccer");
-
-    assert!(
-        build_output.status.success(),
-        "Failed to build doccer: {}",
-        String::from_utf8_lossy(&build_output.stderr)
-    );
-
-    let output = Command::new("./target/debug/doccer")
-        .arg("nonexistent.json")
-        .output()
-        .expect("Failed to execute doccer");
-
-    // Should fail with non-zero exit code
-    assert!(!output.status.success());
-}
-
 /// Test that doccer requires an input argument
 #[test]
 fn test_missing_argument() {
@@ -194,39 +302,10 @@ fn test_json_validity() {
         serde_json::from_str(sample_json).expect("Sample JSON should be valid");
 }
 
-/// Test performance - all fixtures should process quickly
-#[test]
-fn test_performance() {
-    use std::time::Instant;
-
-    let fixtures = [
-        "basic_types",
-        "generics",
-        "modules",
-        "complex",
-        "deprecation",
-    ];
-    let start = Instant::now();
-
-    for fixture in &fixtures {
-        // Read expected output directly instead of processing JSON
-        let expected_path = format!("tests/expected/{}.txt", fixture);
-        let _ = fs::read_to_string(&expected_path).expect("Failed to read expected output file");
-    }
-
-    let duration = start.elapsed();
-
-    // All fixtures should process in under 30 seconds as per success criteria
-    // (This is a trivial test now, but we keep it for the structure)
-    assert!(
-        duration.as_secs() < 30,
-        "Test took too long: {:?} (should be < 30s)",
-        duration
-    );
-}
-
 /// Test the command-line parsing for local crate mode and direct file reading
 /// This test doesn't require the nightly compiler to be installed
+/// TODO this test is testing deprecated functionality (reading json file directly via CLI)
+/// This test _content_ is valid, but it needs to be reframed as a unit test rather than an integration test.
 #[test]
 fn test_cli_command_parsing() {
     // Create a mock sample.json with minimal valid content

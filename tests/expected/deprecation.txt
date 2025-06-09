@@ -7,70 +7,74 @@ Deprecation fixture for testing doccer
 This crate contains deprecated items to validate
 deprecation notice rendering functionality.
 
-  pub struct Config { ... }
-    /// A simple struct with deprecated field
+  /// A simple struct with deprecated field
+  pub struct Config {
 
-      pub fn new(api_key: String, timeout_ms: u32) -> Self
-        /// Creates a new config
+    /// Creates a new config
+    pub fn new(api_key: String, timeout_ms: u32) -> Self
 
-      pub fn set_timeout(&mut self, seconds: u32)
-        DEPRECATED since 1.1.0
-        /// Old method for setting timeout in seconds
+    DEPRECATED since 1.1.0
+    /// Old method for setting timeout in seconds
+    pub fn set_timeout(&mut self, seconds: u32)
 
-      pub fn set_timeout_ms(&mut self, ms: u32)
-        /// Sets the timeout in milliseconds
+    /// Sets the timeout in milliseconds
+    pub fn set_timeout_ms(&mut self, ms: u32)
+  }
 
-  pub enum Status { ... }
-    DEPRECATED since 1.3.0
-    /// A deprecated enum that should be replaced
+  DEPRECATED since 1.3.0
+  /// A deprecated enum that should be replaced
+  pub enum Status {
 
+    /// Everything is fine
     Ok
-      /// Everything is fine
 
+    /// Something went wrong
     Error
-      /// Something went wrong
+  }
 
-  pub enum HttpStatus { ... }
-    /// HTTP status codes
+  /// HTTP status codes
+  pub enum HttpStatus {
 
+    /// 200 OK
     Ok
-      /// 200 OK
 
+    /// 400 Bad Request
     BadRequest
-      /// 400 Bad Request
 
+    /// 404 Not Found
     NotFound
-      /// 404 Not Found
 
+    /// 500 Internal Server Error
     InternalError
-      /// 500 Internal Server Error
+  }
 
-  pub trait Handler { ... }
-    /// A trait for handling deprecation
+  /// A trait for handling deprecation
+  pub trait Handler {
+
+    /// Process a request
+    fn process(&self) -> Result<(), String>
+
+    DEPRECATED since 1.2.5
+    /// Old way of handling errors
+    fn handle_error(&self, error: &str)
+  }
+
+  /// Implementation of Handler
+  pub struct DefaultHandler {
+  }
+
+  /// Implementation of Handler trait for DefaultHandler
+  impl Handler for DefaultHandler {
 
     fn process(&self) -> Result<(), String>
-      /// Process a request
 
-    fn handle_error(&self, error: &str)
-      DEPRECATED since 1.2.5
-      /// Old way of handling errors
+    DEPRECATED since 1.2.5
+    fn handle_error(&self, _error: &str)
+  }
 
-  pub struct DefaultHandler { ... }
-    /// Implementation of Handler
-
-  impl Handler for DefaultHandler
-    /// Implementation of Handler trait for DefaultHandler
-
-      fn process(&self) -> Result<(), String>
-
-      fn handle_error(&self, _error: &str)
-        DEPRECATED since 1.2.5
-
+  DEPRECATED since 1.0.0
+  /// A function that is no longer recommended
   pub fn connect(host: &str, port: u16) -> bool
-    DEPRECATED since 1.0.0
-    /// A function that is no longer recommended
 
+  /// New connection function
   pub fn new_connect(host: &str, port: u16) -> Result<(), String>
-    /// New connection function
-
-

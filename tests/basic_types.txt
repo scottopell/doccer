@@ -20,7 +20,7 @@ basic parsing and rendering functionality.
   /// Implementation of Named trait for Person
   impl Named for Person {
 
-    fn name(&self) -> &str
+      fn name(&self) -> &str
   }
 
   /// Different types of vehicles

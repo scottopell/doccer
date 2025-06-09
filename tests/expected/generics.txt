@@ -7,61 +7,66 @@ Generics fixture for testing doccer
 This crate contains generic types, lifetimes, and constraints
 to validate advanced parsing functionality.
 
-  pub struct Container<T> { ... }
-    /// A generic container that holds a value
+  /// A generic container that holds a value
+  pub struct Container<T> {
 
-      pub fn new(value: T) -> Self
-        /// Creates a new container
+    /// Creates a new container
+    pub fn new(value: T) -> Self
 
-      pub fn get(&self) -> &T
-        /// Gets a reference to the contained value
+    /// Gets a reference to the contained value
+    pub fn get(&self) -> &T
 
-      pub fn into_inner(self) -> T
-        /// Consumes the container and returns the value
+    /// Consumes the container and returns the value
+    pub fn into_inner(self) -> T
+  }
 
-  pub struct Pair<T, U> { ... }
-    /// A generic pair of values
+  /// A generic pair of values
+  pub struct Pair<T, U> {
+  }
 
-  pub trait Comparable<T> { ... }
-    /// A trait for types that can be compared
+  /// A trait for types that can be compared
+  pub trait Comparable<T> {
 
+    /// Compare this value with another
     fn compare(&self, other: &T) -> std::cmp::Ordering
-      /// Compare this value with another
+  }
 
-  pub struct Result<T, E> where T: Clone, E: Display { ... }
-    /// A generic result type with constraints
+  /// A generic result type with constraints
+  pub struct Result<T, E> where T: Clone, E: Display {
 
-      pub fn ok(value: T) -> Self
-        /// Creates a successful result
+    /// Creates a successful result
+    pub fn ok(value: T) -> Self
 
-      pub fn err(error: E) -> Self
-        /// Creates an error result
+    /// Creates an error result
+    pub fn err(error: E) -> Self
+  }
 
+  /// A function with lifetime parameters
   pub fn longest<'a>(x: &'a str, y: &'a str) -> &'a str
-    /// A function with lifetime parameters
 
-  pub struct Reference<'a> { ... }
-    /// A struct with lifetime parameters
+  /// A struct with lifetime parameters
+  pub struct Reference<'a> {
 
-      pub fn new(data: &'a str) -> Self
-        /// Creates a new reference
+    /// Creates a new reference
+    pub fn new(data: &'a str) -> Self
+  }
 
-  pub trait Iterator { ... }
-    /// Associated types example
+  /// Associated types example
+  pub trait Iterator {
 
+    /// The type of items yielded by the iterator
     type Item
-      /// The type of items yielded by the iterator
 
+    /// Get the next item
     fn next(&mut self) -> Option<Self::Item>
-      /// Get the next item
+  }
 
-  pub trait Constants<T> { ... }
-    /// Generic associated constants
+  /// Generic associated constants
+  pub trait Constants<T> {
 
+    /// A default value
     const DEFAULT: T
-      /// A default value
 
+    /// Maximum value
     const MAX: T
-      /// Maximum value
-
-
+  }
