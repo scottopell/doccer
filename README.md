@@ -95,6 +95,19 @@ doccer --crate-path /path/to/crate --no-default-features --features "specific_fe
   rustup component add rust-docs-json --toolchain nightly
   ```
 
+## Version Compatibility
+
+**Important:** Doccer is currently pinned to handle **rustdoc JSON format version 40** (rustdoc-types v0.36.0). This corresponds to Rust nightly builds from around March 2025.
+
+As Rust nightly continues to evolve and the JSON format version increases beyond 40, we will need to update our `rustdoc-types` dependency to match the newer format. If you encounter parsing errors with newer nightly builds, this likely indicates the format version has changed and an update is needed.
+
+To check your current nightly version:
+```bash
+rustc +nightly --version
+```
+
+If you're using a significantly newer nightly and experiencing issues, please check if there's an updated version of Doccer available, or consider using an older nightly that's compatible with format version 40.
+
 ## Goal
 
 Transforms rustdoc's machine-readable JSON into a concise, ASCII-text representation showing function signatures and documentation comments, optimized for terminal display.

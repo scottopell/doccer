@@ -304,6 +304,7 @@ dependencies = [
  "mockall",
  "reqwest",
  "rustdoc-json",
+ "rustdoc-types",
  "serde",
  "serde_json",
  "similar",
@@ -1171,6 +1172,15 @@ dependencies = [
  "thiserror 2.0.12",
  "toml",
  "tracing",
+]
+
+[[package]]
+name = "rustdoc-types"
+version = "0.36.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e5e9c03264c20dcf51813b421e60809fa17637d8fb917bf4e7de448ccbdf409e"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

@@ -2,7 +2,8 @@
 mod formatting_tests {
     use serde_json::json;
     use std::collections::HashMap;
-    use crate::{Crate, Visibility, Deprecation, ParsedRenderer, ParsedFunction, FunctionSignature, RustType, Generics, GenericParam, GenericParamKind, ParsedTraitImplItem, ParsedTraitImpl, ParsedTraitItem, ParsedModule, ParsedStruct, ParsedItem};
+    use rustdoc_types::{Crate, Visibility, Deprecation, Id};
+    use crate::{ParsedRenderer, ParsedFunction, FunctionSignature, RustType, Generics, GenericParam, GenericParamKind, ParsedTraitImplItem, ParsedTraitImpl, ParsedTraitItem, ParsedModule, ParsedStruct, ParsedItem, RenderContext, Render};
 
     // Helper function to create minimal test items
     fn create_test_item(kind: &str) -> serde_json::Value {
@@ -20,13 +21,13 @@ mod formatting_tests {
 
     fn create_test_crate() -> Crate {
         Crate {
-            root: 0,
+            root: Id(0),
             crate_version: Some("0.1.0".to_string()),
             includes_private: false,
             index: HashMap::new(),
-            paths: json!({}),
-            external_crates: json!({}),
-            format_version: 0,
+            paths: HashMap::new(),
+            external_crates: HashMap::new(),
+            format_version: 32,
         }
     }
     
@@ -78,8 +79,9 @@ mod formatting_tests {
             docs: Some("Implementation of Named trait for Person".to_string()),
         };
         
-        // Call the renderer function
-        renderer.render_trait_impl(&trait_impl, &mut output, 1);
+        // Call the renderer function using the new trait-based approach
+        let context = RenderContext::new().with_depth(1);
+        output.push_str(&trait_impl.render(&context));
         
         // Check for exact indentation - should be 4 spaces for trait method implementations
         assert!(output.contains("impl Named for Person"));
@@ -167,8 +169,9 @@ mod formatting_tests {
             docs: None,
         };
         
-        // Call the renderer function
-        renderer.render_trait_impl(&trait_impl, &mut output, 1);
+        // Call the renderer function using the new trait-based approach
+        let context = RenderContext::new().with_depth(1);
+        output.push_str(&trait_impl.render(&context));
         
         // Check both methods have consistent indentation
         let lines: Vec<&str> = output.lines().collect();
@@ -240,8 +243,9 @@ mod formatting_tests {
             docs: None,
         };
         
-        // Call the renderer function
-        renderer.render_trait_impl(&trait_impl, &mut output, 1);
+        // Call the renderer function using the new trait-based approach
+        let context = RenderContext::new().with_depth(1);
+        output.push_str(&trait_impl.render(&context));
 
         // Check for lifetime annotation
         assert!(output.contains("<'_>"));
@@ -302,8 +306,9 @@ mod formatting_tests {
             docs: None,
         };
         
-        // Call the renderer function
-        renderer.render_trait_impl(&trait_impl, &mut output, 1);
+        // Call the renderer function using the new trait-based approach
+        let context = RenderContext::new().with_depth(1);
+        output.push_str(&trait_impl.render(&context));
 
         // Should use std::fmt namespace for Display trait
         assert!(output.contains("&mut std::fmt::Formatter<'_>"));
@@ -319,7 +324,8 @@ mod formatting_tests {
         let renderer = create_parsed_renderer();
         
         // Call the renderer function
-        renderer.render_doc_comment(docs, &mut output, "  ");
+        let doc_renderer = crate::renderer::DocRenderer;
+        output.push_str(&doc_renderer.render_docs(Some(&docs.to_string()), "  "));
 
         // Should have a single space after the doc comment prefix
         assert!(output.contains("/// A macro"));
@@ -369,7 +375,8 @@ mod formatting_tests {
         };
         
         // Call the renderer function
-        renderer.render_function(&func, &mut output, 1);
+        let context = RenderContext::new().with_depth(1);
+        output.push_str(&func.render(&context));
 
         // Should not add "-> ..." to methods with no return type
         assert!(!output.contains("-> ..."));
@@ -405,7 +412,8 @@ mod formatting_tests {
         };
         
         // Call the renderer function
-        renderer.render_function(&func, &mut output, 1);
+        let context = RenderContext::new().with_depth(1);
+        output.push_str(&func.render(&context));
 
         // Unit return type should be omitted (standard Rust syntax)
         assert!(!output.contains("-> ()"));
@@ -445,7 +453,8 @@ mod formatting_tests {
         };
         
         // Call the renderer function
-        renderer.render_function(&func, &mut output, 1);
+        let context = RenderContext::new().with_depth(1);
+        output.push_str(&func.render(&context));
 
         // Should not add "-> ..." to methods with missing return type
         assert!(!output.contains("-> ..."));
@@ -483,7 +492,8 @@ mod formatting_tests {
         };
         
         // Call the renderer function
-        renderer.render_struct(&struct_def, &mut output, 1);
+        let context = RenderContext::new().with_depth(1);
+        output.push_str(&struct_def.render(&context));
 
         // Should show the type constraint in the struct definition
         assert!(output.contains("pub struct Cache<'a, T: Cacheable>"));
@@ -532,7 +542,8 @@ mod formatting_tests {
         };
         
         // Call the renderer function
-        renderer.render_struct(&struct_def, &mut output, 1);
+        let context = RenderContext::new().with_depth(1);
+        output.push_str(&struct_def.render(&context));
 
         // All bounds should be preserved in output
         assert!(output.contains("pub struct Storage<K: Clone + Debug + PartialEq + std::hash::Hash, V: Clone + Debug>"));
@@ -555,8 +566,9 @@ mod formatting_tests {
             docs: None,
         };
         
-        // Call the renderer function
-        renderer.render_trait_impl(&trait_impl, &mut output, 1);
+        // Call the renderer function using the new trait-based approach
+        let context = RenderContext::new().with_depth(1);
+        output.push_str(&trait_impl.render(&context));
 
         // Empty trait impls should not have braces with nothing inside
         assert!(output.contains("impl Error for HttpError"));
@@ -639,7 +651,8 @@ mod formatting_tests {
         
         // Render all items
         for item in &module.items {
-            renderer.render_item(item, &mut output, 1);
+            let context = RenderContext::new().with_depth(1);
+            output.push_str(&item.render(&context));
         }
 
         // All trait implementations should be rendered
@@ -693,7 +706,8 @@ mod formatting_tests {
         let mut output = String::new();
         let renderer = create_parsed_renderer();
         
-        renderer.render_function(&func, &mut output, 1);
+        let context = RenderContext::new().with_depth(1);
+        output.push_str(&func.render(&context));
         
         // Check that deprecation notice is rendered correctly with proper indentation
         assert!(output.contains("  DEPRECATED since 1.1.0"));
@@ -739,7 +753,8 @@ mod formatting_tests {
         );
         
         // Call the renderer function
-        renderer.render_trait_item(&trait_item, &mut output, 1);
+        let context = RenderContext::new().with_depth(1);
+        output.push_str(&trait_item.render(&context));
         
         // Check for proper deprecation notice placement
         assert!(output.contains("DEPRECATED since 1.2.5"));
@@ -827,8 +842,9 @@ mod formatting_tests {
             docs: None,
         };
         
-        // Call the renderer function
-        renderer.render_trait_impl(&trait_impl, &mut output, 1);
+        // Call the renderer function using the new trait-based approach
+        let context = RenderContext::new().with_depth(1);
+        output.push_str(&trait_impl.render(&context));
         
         // Check that both methods are rendered
         assert!(output.contains("fn process("));

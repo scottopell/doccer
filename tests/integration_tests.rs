@@ -291,10 +291,14 @@ fn test_json_validity() {
                 "links": {},
                 "attrs": [],
                 "deprecation": null,
-                "inner": {"module": {"items": []}}
+                "inner": {"module": {"is_crate": true, "items": [], "is_stripped": false}}
             }
         },
-        "external_crates": {}
+        "external_crates": {},
+        "paths": {},
+        "crate_version": null,
+        "includes_private": false,
+        "format_version": 40
     }"#;
 
     // Parse as JSON to ensure we can handle this format
@@ -309,7 +313,7 @@ fn test_json_validity() {
 #[test]
 fn test_cli_command_parsing() {
     // Create a mock sample.json with minimal valid content
-    let json_content = r#"{"root":1,"index":{"1":{"id":1,"crate_id":0,"name":"sample","visibility":"public","docs":"Sample crate","links":{},"attrs":[],"deprecation":null,"inner":{"module":{"items":[]}}}},"external_crates":{}}"#;
+    let json_content = r#"{"root":1,"index":{"1":{"id":1,"crate_id":0,"name":"sample","visibility":"public","docs":"Sample crate","links":{},"attrs":[],"deprecation":null,"inner":{"module":{"is_crate":true,"items":[],"is_stripped":false}}}},"external_crates":{},"paths":{},"crate_version":null,"includes_private":false,"format_version":40}"#;
 
     // Write to a temporary file
     let temp_dir = tempfile::tempdir().expect("Failed to create temporary directory");

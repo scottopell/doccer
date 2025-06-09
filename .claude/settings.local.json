@@ -18,7 +18,9 @@
       "Bash(jq:*)",
       "Bash(diff:*)",
       "Bash(sed:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "WebFetch(domain:docs.rs)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "deny": []
   }
