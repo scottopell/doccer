@@ -40,6 +40,7 @@ fn assert_strings_eq(actual: &str, expected: &str, message: &str) {
             "Expected: {} lines, Actual: {} lines\n\n",
             expected_lines, actual_lines
         ));
+        diff_output.push_str("Legend: \x1b[31m- EXPECTED\x1b[0m | \x1b[32m+ ACTUAL\x1b[0m\n\n");
 
         // Line numbers to help with context
         let mut line_number_expected = 1;
@@ -72,17 +73,17 @@ fn assert_strings_eq(actual: &str, expected: &str, message: &str) {
             if show_line {
                 let (prefix, content) = match change.tag() {
                     ChangeTag::Delete => {
-                        let prefix = format!("{:4} \x1b[31m-\x1b[0m | ", line_number_expected);
+                        let prefix = format!("{:4} \x1b[31m- EXPECTED\x1b[0m | ", line_number_expected);
                         line_number_expected += 1;
                         (prefix, format!("\x1b[31m{}\x1b[0m", change))
                     }
                     ChangeTag::Insert => {
-                        let prefix = format!("{:4} \x1b[32m+\x1b[0m | ", line_number_actual);
+                        let prefix = format!("{:4} \x1b[32m+ ACTUAL  \x1b[0m | ", line_number_actual);
                         line_number_actual += 1;
                         (prefix, format!("\x1b[32m{}\x1b[0m", change))
                     }
                     ChangeTag::Equal => {
-                        let prefix = format!("{:4}   | ", line_number_expected);
+                        let prefix = format!("{:4}   CONTEXT | ", line_number_expected);
                         line_number_expected += 1;
                         line_number_actual += 1;
                         (prefix, format!("{}", change))

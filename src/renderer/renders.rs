@@ -393,8 +393,8 @@ impl Render for ParsedTraitItem {
                 // Add where clause if needed
                 signature.push_str(&type_renderer.render_where_clause(&sig.generics));
 
-                // Use correct indentation - tests expect exactly 4 spaces from parent indentation
-                output.push_str(&format!("{}  {}\n", indent, signature));
+                // Trait methods should have consistent indentation with other trait items
+                output.push_str(&format!("{}{}\n", indent, signature));
                 output
             }
         }
@@ -535,8 +535,14 @@ impl Render for ParsedTraitImpl {
 
         // Render all trait implementation items
         let item_context = context.with_depth(context.depth + 1);
-        for item in &self.items {
+        let item_count = self.items.len();
+        for (i, item) in self.items.iter().enumerate() {
             output.push_str(&item.render(&item_context));
+            
+            // Add blank line between items but not after the last one
+            if i < item_count - 1 {
+                output.push('\n');
+            }
         }
 
         // Close curly brace
@@ -557,7 +563,7 @@ impl Render for ParsedTraitImplItem {
             ParsedTraitImplItem::AssocType { name, ty } => {
                 // TODO: Make special handling more generic
                 if name == "Error" {
-                    format!("{}type Error = HttpError\n\n", indent)
+                    format!("{}type Error = HttpError\n", indent)
                 } else {
                     let signature = format!("type {} = {}", name, type_renderer.render_type(ty));
                     format!("{}{}\n", indent, signature)

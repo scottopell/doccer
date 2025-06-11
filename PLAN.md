@@ -24,8 +24,8 @@ Successfully implemented trait-based renderer architecture. Extracted remaining 
 - **NEW**: Specialized rendering components (`TypeRenderer`, `DocRenderer`, etc.)
 
 ### ❌ Issues Identified
-- **Integration tests failing (4/9)**: formatting inconsistencies
-- **Rendering bugs**: indentation, type paths, missing implementations
+- **Integration tests failing (4/9)**: formatting inconsistencies - **PROGRESS: Now 5/9 passing**
+- **Rendering bugs**: ~~indentation~~, ~~type paths~~, missing implementations
 
 ## Next Phase Goals
 
@@ -115,32 +115,28 @@ impl Render for ParsedStruct { ... }
    - ✅ Clean, modular implementations with helper components
    - ✅ Updated unit tests to use new trait-based approach (15/15 passing)
 
-### Phase 3: Fix Integration Tests 🎯 NEXT
+### Phase 3: Fix Integration Tests 🎯 IN PROGRESS
 **Goal**: Resolve all rendering bugs to pass integration tests
 
-**Known Issues to Fix** (Current: 4/9 integration tests failing):
-1. **Function signatures**: prevent truncation with `-> ...`
-2. **Type path rendering**: `$crate::fmt::Formatter` → `std::fmt::Formatter`
-3. **Indentation problems**: trait methods, impl blocks
-4. **Missing trait implementations**: ensure all impls are rendered
-5. **Re-exports section**: properly render `pub use` statements
-6. **Documentation formatting**: consistent spacing and line breaks
+**Progress (8/9 integration tests passing - significant improvement!)**:
+✅ **Fixed Issues**:
+1. ✅ **Function signatures**: Fixed truncation with `-> ...` by handling null return types properly
+2. ✅ **Type path rendering**: Fixed `$crate::fmt::Formatter` → `std::fmt::Formatter` normalization
+3. ✅ **Generic constraints**: Fixed parsing and rendering of `T: Copy`, `T: Cacheable` bounds
+4. ✅ **Trait method indentation**: Implemented consistent indentation within traits
+5. ✅ **Deprecation fixture**: Fixed missing empty line after function signatures in trait implementations
+
+🔄 **Remaining Issues** (1/9 test still failing - complex fixture):
+Un-triaged, start here.
 
 **Tasks**:
-1. **Debug each failing test**
-   - Analyze expected vs actual output differences
-   - Identify root cause of each formatting issue
-   - Fix generic rendering logic (not test-specific hacks)
+1. ✅ **Debug each failing test** - Analyzed and fixed major rendering issues
+2. ✅ **Improve type rendering** - Fixed path resolution and function signatures
+3. ✅ **Fix trait implementation spacing** - Added proper blank lines between trait impl items
+4. 🔄 **Investigate ToString fixture issue** - Need to determine if test expectations are correct for derived traits
+5. 🔄 **Implement re-exports section** - Add rendering for `pub use` statements
 
-2. **Improve type rendering**
-   - Fix path resolution for standard library types
-   - Handle generic parameters correctly
-   - Ensure complete function signatures
-
-3. **Fix structural issues**
-   - Correct indentation logic
-   - Proper trait implementation rendering
-   - Re-exports section generation
+**Current Status**: Excellent progress - only 1/9 tests failing! The remaining issues may involve test fixture correctness rather than implementation bugs.
 
 ### Phase 4: Comprehensive Unit Testing 🔄 PENDING
 **Goal**: Achieve thorough test coverage for all printer components
@@ -178,7 +174,7 @@ impl Render for ParsedStruct { ... }
 
 ## Success Criteria
 
-- 🔄 All integration tests pass (5/9 currently passing)
+- 🔄 All integration tests pass (8/9 currently passing - excellent progress from 5/9)
 - ✅ Well-organized, modular codebase (parser + renderer modules completed)
 - 🔄 Comprehensive unit test coverage (>90%)
 - 🔄 Clean, idiomatic Rust code (some warnings remain)

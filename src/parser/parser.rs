@@ -46,6 +46,7 @@ impl<'a> ItemParser<'a> {
                     "CloneToUninit",
                     "ToOwned",
                     "StructuralPartialEq",
+                    "ToString",
                 ];
 
                 // Extract just the trait name (last part of the path)
@@ -165,6 +166,11 @@ impl<'a> ItemParser<'a> {
     }
 
     fn parse_type(&self, type_val: &serde_json::Value) -> RustType {
+        // Handle null values as unit type
+        if type_val.is_null() {
+            return RustType::Unit;
+        }
+
         if let Some(primitive) = type_val.get("primitive") {
             if let Some(prim_str) = primitive.as_str() {
                 return RustType::Primitive(prim_str.to_string());
@@ -184,6 +190,22 @@ impl<'a> ItemParser<'a> {
                 .unwrap_or("unknown")
                 .to_string();
 
+            // Normalize $crate:: paths to their standard library equivalents
+            let normalized_path = if path.starts_with("$crate::") {
+                match path.as_str() {
+                    "$crate::fmt::Formatter" => "std::fmt::Formatter".to_string(),
+                    "$crate::fmt::Result" => "std::fmt::Result".to_string(),
+                    "$crate::clone::Clone" => "Clone".to_string(),
+                    "$crate::cmp::PartialEq" => "PartialEq".to_string(),
+                    other => {
+                        // For other $crate:: paths, replace with std::
+                        other.replace("$crate::", "std::")
+                    }
+                }
+            } else {
+                path
+            };
+
             let mut generics = Vec::new();
             if let Some(args) = resolved_path.get("args") {
                 if let Some(angle_bracketed) = args.get("angle_bracketed") {
@@ -198,7 +220,7 @@ impl<'a> ItemParser<'a> {
                 }
             }
 
-            return RustType::Path { path, generics };
+            return RustType::Path { path: normalized_path, generics };
         }
 
         if let Some(borrowed_ref) = type_val.get("borrowed_ref") {
@@ -283,8 +305,22 @@ impl<'a> ItemParser<'a> {
             for param in params_array {
                 if let Some(name) = param.get("name").and_then(|n| n.as_str()) {
                     if let Some(kind) = param.get("kind") {
-                        if kind.get("type").is_some() {
-                            let bounds = Vec::new(); // TODO: Parse bounds
+                        if let Some(type_kind) = kind.get("type") {
+                            let mut bounds = Vec::new();
+                            
+                            // Parse bounds from the type kind
+                            if let Some(bounds_array) = type_kind.get("bounds").and_then(|b| b.as_array()) {
+                                for bound in bounds_array {
+                                    if let Some(trait_bound) = bound.get("trait_bound") {
+                                        if let Some(trait_ref) = trait_bound.get("trait") {
+                                            if let Some(path) = trait_ref.get("path").and_then(|p| p.as_str()) {
+                                                bounds.push(path.to_string());
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            
                             params.push(GenericParam {
                                 name: name.to_string(),
                                 kind: GenericParamKind::Type { bounds },

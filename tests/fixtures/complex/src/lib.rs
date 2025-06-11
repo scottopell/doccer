@@ -12,7 +12,7 @@
 //! ```
 
 use std::collections::HashMap;
-use std::fmt::{Debug, Display};
+use std::fmt::Debug;
 
 /// A macro for creating formatted messages
 ///
@@ -36,7 +36,7 @@ pub mod storage {
     /// A generic storage container with complex constraints
     pub struct Storage<K, V>
     where
-        K: Clone + Debug + PartialEq + std::hash::Hash,
+        K: Clone + Debug + PartialEq + Eq + std::hash::Hash,
         V: Clone + Debug,
     {
         /// Internal data storage
@@ -49,7 +49,7 @@ pub mod storage {
 
     impl<K, V> Storage<K, V>
     where
-        K: Clone + Debug + PartialEq + std::hash::Hash,
+        K: Clone + Debug + PartialEq + Eq + std::hash::Hash,
         V: Clone + Debug,
     {
         /// Creates a new storage with default capacity

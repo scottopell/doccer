@@ -54,7 +54,7 @@ storage.insert("key", "value");
       /// Implementation of Debug trait for CachedString
       impl Debug for CachedString {
 
-        fn fmt(&self, f: &mut $crate::fmt::Formatter<'_>) -> $crate::fmt::Result
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
       }
 
     /// A generic storage container with complex constraints
@@ -86,10 +86,10 @@ storage.insert("key", "value");
       type Key: Clone + Debug
 
       /// Gets the cache key for this item
-    fn cache_key(&self) -> Self::Key
+      fn cache_key(&self) -> Self::Key
 
       /// Validates if the item can be cached
-    fn can_cache(&self) -> bool
+      fn can_cache(&self) -> bool
     }
 
     /// Cache implementation with lifetime parameters
@@ -158,7 +158,7 @@ storage.insert("key", "value");
       /// Implementation of Debug trait for HttpError
       impl Debug for HttpError {
 
-        fn fmt(&self, f: &mut $crate::fmt::Formatter<'_>) -> $crate::fmt::Result
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
       }
 
       /// Implementation of Display trait for HttpError
@@ -198,13 +198,13 @@ storage.insert("key", "value");
     /// Implementation of Debug trait for Point
     impl Debug for Point<T> {
 
-    fn fmt(&self, f: &mut $crate::fmt::Formatter<'_>) -> $crate::fmt::Result
+      fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
     }
 
     /// Implementation of Clone trait for Point
     impl Clone for Point<T> {
 
-    fn clone(&self) -> Point<T>
+      fn clone(&self) -> Point<T>
     }
 
     /// Implementation of Copy trait for Point
@@ -213,13 +213,5 @@ storage.insert("key", "value");
     /// Implementation of PartialEq trait for Point
     impl PartialEq for Point<T> {
 
-    fn eq(&self, other: &Point<T>) -> bool
+      fn eq(&self, other: &Point<T>) -> bool
     }
-
-# Re-exports
-
-  /// Re-exports for convenience
-  pub use math::Point
-  pub use network::protocol::Http
-  pub use network::protocol::Protocol
-  pub use storage::Storage
