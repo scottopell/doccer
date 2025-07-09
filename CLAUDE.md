@@ -2,10 +2,76 @@
 emit human-readable text for terminal viewing of rust documentation
 </project_goal>
 
+<project_overview>
+Doccer is a Rust CLI tool that converts rustdoc JSON output into human-readable text optimized for terminal viewing. It supports multiple input sources:
+- External crates from docs.rs
+- Local crate documentation generation
+- Standard library documentation (std, core, alloc)
+- Local JSON files (deprecated)
+
+The tool transforms rustdoc's machine-readable JSON into concise, ASCII-text representation showing function signatures and documentation comments.
+</project_overview>
+
+<architecture>
+The project follows a two-phase architecture:
+
+1. **Parsing Phase** (`src/parser/`):
+   - `ItemParser` converts rustdoc JSON into structured `ParsedItem` types
+   - `parser.rs` - Core parsing logic and rustdoc-types integration
+   - `types.rs` - Internal representation types (ParsedItem, RustType, etc.)
+
+2. **Rendering Phase** (`src/renderer/`):
+   - `ParsedRenderer` converts structured data into human-readable text
+   - `renderer.rs` - Main renderer implementation
+   - `traits.rs` - Extensible `Render` trait with `RenderContext`
+   - `components.rs` - Specialized rendering components (TypeRenderer, DocRenderer)
+   - `renders.rs` - Modular render implementations for all `ParsedItem` variants
+
+3. **CLI Interface** (`src/main.rs`):
+   - Command-line argument parsing with clap
+   - Input type resolution and data fetching
+   - Integration with docs.rs, local crates, and stdlib docs
+</architecture>
 
 <commands>
     <test> cargo test </test>
+    <build> cargo build --release </build>
+    <run_integration> cargo test --test integration_tests </run_integration>
+    <run_unit> cargo test --lib </run_unit>
+    <lint> cargo clippy -- -D warnings </lint>
+    <format> cargo fmt </format>
 </commands>
+
+<testing_approach>
+The project uses a comprehensive testing strategy:
+
+1. **Unit Tests** (`src/tests/`, `tests/unit/`):
+   - Test individual components in isolation
+   - Cover parsing, rendering, error handling, and type rendering
+   - Use mockall for network testing
+   - Focus on component-specific behavior
+
+2. **Integration Tests** (`tests/integration_tests.rs`):
+   - End-to-end testing with real test fixtures
+   - Compare actual output against expected output files
+   - Use custom diff assertion for readable failure messages
+   - Test fixtures in `tests/fixtures/` (basic_types, complex, generics, etc.)
+
+3. **Test Fixtures**:
+   - `tests/fixtures/*/` - Small Rust crates for testing
+   - `tests/expected/` - Expected output files
+   - Cover various Rust constructs (structs, enums, traits, generics, modules)
+</testing_approach>
+
+<development_workflow>
+1. **Before making changes**: Run `cargo test` to ensure all tests pass
+2. **After making changes**: 
+   - Run `cargo test` to verify functionality
+   - Run `cargo clippy` to check for lint issues
+   - Run `cargo fmt` to ensure consistent formatting
+3. **For integration test failures**: Use the detailed diff output to understand formatting differences
+4. **For new features**: Add both unit tests and integration tests where appropriate
+</development_workflow>
 
 <code_instructions>
     <comments>All comments should be written in context of the project as a
@@ -38,5 +104,48 @@ emit human-readable text for terminal viewing of rust documentation
         This separation between code and tests is MANDATORY. Violating this rule
         will result in immediate rejection of any changes.
     </CRITICAL_RULES>
+
+    <architecture_principles>
+        - Maintain the two-phase architecture: Parse → Render
+        - Keep parsers and renderers loosely coupled
+        - Use the official rustdoc-types for JSON parsing
+        - Prefer generic solutions over special-case handling
+        - Maintain extensibility through trait-based design
+        - Follow Rust best practices for error handling (anyhow, Result)
+    </architecture_principles>
+
+    <rendering_guidelines>
+        - Output must be human-readable and optimized for terminal display
+        - Maintain consistent indentation and formatting
+        - Include documentation comments when available
+        - Show function signatures clearly
+        - Handle deprecation warnings appropriately
+        - Support filtering by module paths
+    </rendering_guidelines>
 </code_instructions>
 
+<known_issues>
+    <version_compatibility>
+        Project is pinned to rustdoc JSON format version 40 (rustdoc-types v0.36.0).
+        This corresponds to Rust nightly builds from around March 2025.
+        May need updates for newer nightly versions.
+    </version_compatibility>
+
+    <integration_tests>
+        Some integration tests may fail due to formatting differences.
+        Use the detailed diff output to understand and fix rendering issues.
+        Focus on improving the generic implementation rather than hardcoding fixes.
+    </integration_tests>
+</known_issues>
+
+<dependencies>
+    <key_crates>
+        - rustdoc-types: Official rustdoc JSON types
+        - serde/serde_json: JSON serialization
+        - clap: Command-line argument parsing
+        - anyhow: Error handling
+        - reqwest: HTTP client for docs.rs
+        - rustdoc-json: Local crate documentation generation
+        - tracing: Logging and debugging
+    </key_crates>
+</dependencies>

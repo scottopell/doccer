@@ -1,0 +1,263 @@
+    Checking unicode-ident v1.0.16
+ Documenting unicode-ident v1.0.16
+ Documenting libc v0.2.169
+ Documenting cfg-if v1.0.0
+ Documenting once_cell v1.20.3
+ Documenting smallvec v1.14.0
+ Documenting pin-project-lite v0.2.16
+ Documenting itoa v1.0.14
+    Checking proc-macro2 v1.0.95
+ Documenting bytes v1.10.0
+ Documenting scopeguard v1.2.0
+ Documenting proc-macro2 v1.0.95
+ Documenting futures-core v0.3.31
+ Documenting futures-sink v0.3.31
+ Documenting log v0.4.27
+    Checking quote v1.0.40
+    Checking syn v2.0.103
+ Documenting lock_api v0.4.12
+ Documenting tracing-core v0.1.33
+ Documenting fnv v1.0.7
+ Documenting slab v0.4.9
+ Documenting futures-task v0.3.31
+ Documenting pin-utils v0.1.0
+ Documenting quote v1.0.40
+ Documenting parking_lot_core v0.9.10
+ Documenting mio v1.0.3
+ Documenting signal-hook-registry v1.4.2
+ Documenting socket2 v0.5.8
+ Documenting http v1.3.1
+ Documenting memchr v2.7.4
+ Documenting syn v2.0.103
+ Documenting parking_lot v0.12.3
+ Documenting stable_deref_trait v1.2.0
+ Documenting hashbrown v0.15.2
+ Documenting equivalent v1.0.2
+ Documenting tower-service v0.3.3
+ Documenting ryu v1.0.19
+ Documenting litemap v0.7.4
+ Documenting http-body v1.0.1
+ Documenting try-lock v0.2.5
+ Documenting httpdate v1.0.3
+ Documenting atomic-waker v1.1.2
+ Documenting writeable v0.5.5
+ Documenting percent-encoding v2.3.1
+ Documenting bitflags v2.8.0
+ Documenting want v0.3.1
+ Documenting futures-channel v0.3.31
+ Documenting httparse v1.10.0
+ Documenting core-foundation-sys v0.8.7
+ Documenting rustls-pki-types v1.11.0
+ Documenting form_urlencoded v1.2.1
+ Documenting typenum v1.17.0
+ Documenting tower-layer v0.3.3
+ Documenting untrusted v0.9.0
+ Documenting mime v0.3.17
+ Documenting icu_locid_transform_data v1.5.0
+ Documenting sync_wrapper v1.0.2
+ Documenting ring v0.17.9
+ Documenting aws-lc-sys v0.29.0
+ Documenting num-traits v0.2.19
+ Documenting zeroize v1.8.1
+ Documenting icu_properties_data v1.5.0
+    Checking serde v1.0.219
+ Documenting generic-array v0.14.7
+    Checking libc v0.2.169
+ Documenting write16 v1.0.0
+    Checking synstructure v0.13.1
+ Documenting utf8_iter v1.0.4
+ Documenting icu_normalizer_data v1.5.0
+ Documenting utf16_iter v1.0.5
+    Checking cpufeatures v0.2.17
+ Documenting serde_derive v1.0.219
+ Documenting tokio-macros v2.5.0
+ Documenting synstructure v0.13.1
+ Documenting tracing-attributes v0.1.28
+ Documenting futures-macro v0.3.31
+ Documenting zerovec-derive v0.10.3
+ Documenting displaydoc v0.2.5
+ Documenting tokio v1.45.1
+ Documenting zerofrom-derive v0.1.5
+ Documenting yoke-derive v0.7.5
+ Documenting futures-util v0.3.31
+ Documenting icu_provider_macros v1.5.0
+ Documenting tracing v0.1.41
+ Documenting serde v1.0.219
+ Documenting aws-lc-rs v1.13.1
+ Documenting zerofrom v0.1.5
+    Checking uuid v1.17.0
+ Documenting block-buffer v0.10.4
+ Documenting crypto-common v0.1.6
+ Documenting yoke v0.7.5
+ Documenting core-foundation v0.10.0
+ Documenting security-framework-sys v2.14.0
+ Documenting zerovec v0.10.4
+ Documenting rustversion v1.0.19
+ Documenting rustls-webpki v0.102.8
+ Documenting base64 v0.22.1
+ Documenting subtle v2.6.1
+ Documenting security-framework v3.2.0
+ Documenting http-body-util v0.1.2
+ Documenting indexmap v2.7.1
+ Documenting serde_json v1.0.140
+ Documenting tinystr v0.7.6
+ Documenting icu_collections v1.5.0
+ Documenting serde_urlencoded v0.7.1
+ Documenting tokio-util v0.7.13
+ Documenting icu_locid v1.5.0
+ Documenting tower v0.5.2
+ Documenting axum-core v0.5.2
+ Documenting rustls v0.23.23
+ Documenting serde_path_to_error v0.1.16
+ Documenting digest v0.10.7
+ Documenting utoipa-gen v5.3.1
+ Documenting h2 v0.4.7
+ Documenting icu_provider v1.5.0
+ Documenting num-integer v0.1.46
+    Checking sha2 v0.10.9
+ Documenting crossbeam-utils v0.8.21
+ Documenting getrandom v0.3.1
+ Documenting icu_locid_transform v1.5.0
+ Documenting zerocopy v0.8.25
+ Documenting errno v0.3.10
+ Documenting num_cpus v1.16.0
+ Documenting cpufeatures v0.2.17
+ Documenting icu_properties v1.5.1
+ Documenting rand_core v0.6.4
+ Documenting matchit v0.8.4
+ Documenting utf8parse v0.2.2
+ Documenting regex-syntax v0.8.5
+ Documenting powerfmt v0.2.0
+ Documenting same-file v1.0.6
+ Documenting anstyle-parse v0.2.6
+ Documenting hyper v1.6.0
+ Documenting ahash v0.8.12
+ Documenting deranged v0.3.11
+ Documenting walkdir v2.5.0
+ Documenting tokio-rustls v0.26.1
+ Documenting utoipa v5.3.1
+ Documenting sha2 v0.10.9
+ Documenting rustix v0.38.44
+ Documenting num-bigint v0.4.6
+    Checking rust-embed-utils v8.7.2
+ Documenting icu_normalizer v1.5.0
+ Documenting rustls-native-certs v0.8.1
+ Documenting webpki-roots v0.26.7
+ Documenting time-macros v0.2.19
+ Documenting ppv-lite86 v0.2.20
+ Documenting aho-corasick v1.1.3
+ Documenting idna_adapter v1.2.0
+ Documenting fastrand v2.3.0
+ Documenting hyper-util v0.1.10
+ Documenting unicase v2.8.1
+ Documenting anstyle v1.0.10
+ Documenting idna v1.0.3
+ Documenting num-conv v0.1.0
+ Documenting colorchoice v1.0.3
+ Documenting is_terminal_polyfill v1.70.1
+ Documenting lazy_static v1.5.0
+ Documenting anstyle-query v1.1.2
+ Documenting time-core v0.1.2
+ Documenting regex-automata v0.4.9
+ Documenting mime_guess v2.0.5
+ Documenting tempfile v3.17.1
+ Documenting url v2.5.4
+ Documenting rand_chacha v0.3.1
+ Documenting anstream v0.6.18
+ Documenting time v0.3.37
+ Documenting axum v0.8.4
+ Documenting hyper-rustls v0.27.5
+ Documenting rust-embed-utils v8.7.2
+ Documenting rust-embed-impl v8.7.2
+ Documenting metrics v0.23.1
+ Documenting quanta v0.12.6
+ Documenting crossbeam-epoch v0.9.18
+ Documenting deadpool-runtime v0.1.4
+ Documenting thiserror v2.0.12
+ Documenting wait-timeout v0.2.1
+ Documenting ipnet v2.11.0
+ Documenting bit-vec v0.8.0
+ Documenting quick-error v1.2.3
+ Documenting strsim v0.11.1
+ Documenting sketches-ddsketch v0.2.2
+ Documenting clap_lex v0.7.4
+    Checking heck v0.5.0
+ Documenting heck v0.5.0
+ Documenting overload v0.1.1
+ Documenting bit-set v0.8.0
+ Documenting rusty-fork v0.3.0
+ Documenting deadpool v0.12.2
+ Documenting metrics-util v0.17.0
+ Documenting clap_derive v4.5.28
+ Documenting simple_asn1 v0.6.3
+ Documenting clap_builder v4.5.29
+ Documenting nu-ansi-term v0.46.0
+ Documenting regex v1.11.1
+ Documenting rust-embed v8.7.2
+ Documenting rand v0.8.5
+ Documenting sharded-slab v0.1.7
+ Documenting rand_xorshift v0.3.0
+ Documenting combine v4.6.7
+ Documenting pem v3.0.5
+ Documenting tracing-serde v0.2.0
+ Documenting matchers v0.1.0
+ Documenting rustls-pemfile v2.2.0
+ Documenting iana-time-zone v0.1.61
+ Documenting tracing-log v0.2.0
+ Documenting thread_local v1.1.8
+ Documenting arc-swap v1.7.1
+ Documenting http-range-header v0.4.2
+ Documenting unarray v0.1.4
+ Documenting sha1_smol v1.0.1
+ Documenting chrono v0.4.41
+ Documenting reqwest v0.12.12
+ Documenting proptest v1.6.0
+ Documenting tower-http v0.6.2
+ Documenting tracing-subscriber v0.3.19
+ Documenting jsonwebtoken v9.3.1
+ Documenting clap v4.5.29
+ Documenting utoipa-swagger-ui v9.0.2
+ Documenting redis v0.29.0
+ Documenting metrics-exporter-prometheus v0.15.3
+ Documenting deadpool-redis v0.19.0
+ Documenting utoipa-redoc v6.0.0
+ Documenting utoipa-rapidoc v6.0.0
+ Documenting anyhow v1.0.95
+ Documenting uuid v1.17.0
+ Documenting async-trait v0.1.88
+ Documenting trait-variant v0.1.2
+ Documenting md5 v0.7.0
+    Checking weather-radar-platform v0.1.0 (/Users/scottopell/dev/weather-radar-platform)
+ Documenting weather-radar-platform v0.1.0 (/Users/scottopell/dev/weather-radar-platform)
+error: lifetime flowing from input to output with different syntax can be confusing
+  --> src/weather/mod.rs:57:22
+   |
+57 |     pub fn locations(&self) -> LocationManager {
+   |                      ^^^^^     --------------- the lifetime gets resolved as `'_`
+   |                      |
+   |                      this lifetime flows to the output
+   |
+   = note: `-D mismatched-lifetime-syntaxes` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(mismatched_lifetime_syntaxes)]`
+help: one option is to remove the lifetime for references and use the anonymous lifetime for paths
+   |
+57 |     pub fn locations(&self) -> LocationManager<'_> {
+   |                                               ++++
+
+error: lifetime flowing from input to output with different syntax can be confusing
+  --> src/weather/mod.rs:62:21
+   |
+62 |     pub fn products(&self) -> ProductManager {
+   |                     ^^^^^     -------------- the lifetime gets resolved as `'_`
+   |                     |
+   |                     this lifetime flows to the output
+   |
+help: one option is to remove the lifetime for references and use the anonymous lifetime for paths
+   |
+62 |     pub fn products(&self) -> ProductManager<'_> {
+   |                                             ++++
+
+error: could not compile `weather-radar-platform` (lib) due to 2 previous errors
+ Documenting weather-radar-platform v0.1.0 (/Users/scottopell/dev/weather-radar-platform)
+    Checking weather-radar-platform v0.1.0 (/Users/scottopell/dev/weather-radar-platform)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.64s

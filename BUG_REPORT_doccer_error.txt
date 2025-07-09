@@ -1,0 +1,4 @@
+Error: Failed to parse JSON documentation
+
+Caused by:
+    expected value at line 1 column 5839

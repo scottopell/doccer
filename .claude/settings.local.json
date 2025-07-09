@@ -20,7 +20,9 @@
       "Bash(sed:*)",
       "Bash(awk:*)",
       "WebFetch(domain:docs.rs)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(rustc:*)",
+      "Bash(./target/debug/doccer:*)"
     ],
     "deny": []
   }
