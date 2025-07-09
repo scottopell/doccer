@@ -1,3 +1,7 @@
+---
+source: tests/integration_tests.rs
+expression: output
+---
 # Crate: basic_types
 
 Version: 0.1.0
@@ -48,5 +52,3 @@ basic parsing and rendering functionality.
     /// Returns the name
     fn name(&self) -> &str
   }
-
-

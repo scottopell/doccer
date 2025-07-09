@@ -2,7 +2,7 @@
 mod formatting_tests {
     use serde_json::json;
     use std::collections::HashMap;
-    use rustdoc_types::{Crate, Visibility, Deprecation, Id};
+    use rustdoc_types::{Crate, Visibility, Deprecation, Id, Target};
     use crate::{ParsedRenderer, ParsedFunction, FunctionSignature, RustType, Generics, GenericParam, GenericParamKind, ParsedTraitImplItem, ParsedTraitImpl, ParsedTraitItem, ParsedModule, ParsedStruct, ParsedItem, RenderContext, Render};
 
     // Helper function to create minimal test items
@@ -27,7 +27,11 @@ mod formatting_tests {
             index: HashMap::new(),
             paths: HashMap::new(),
             external_crates: HashMap::new(),
-            format_version: 32,
+            format_version: 53,
+            target: Target {
+                triple: "x86_64-unknown-linux-gnu".to_string(),
+                target_features: vec![],
+            },
         }
     }
     

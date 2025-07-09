@@ -50,14 +50,14 @@ The project uses a comprehensive testing strategy:
    - Focus on component-specific behavior
 
 2. **Integration Tests** (`tests/integration_tests.rs`):
-   - End-to-end testing with real test fixtures
-   - Compare actual output against expected output files
-   - Use custom diff assertion for readable failure messages
+   - End-to-end testing with real test fixtures using cargo-insta
+   - Snapshot-based testing with automatic diff generation
+   - Interactive review process for approving changes
    - Test fixtures in `tests/fixtures/` (basic_types, complex, generics, etc.)
 
 3. **Test Fixtures**:
    - `tests/fixtures/*/` - Small Rust crates for testing
-   - `tests/expected/` - Expected output files
+   - `tests/snapshots/` - Insta snapshot files for expected outputs
    - Cover various Rust constructs (structs, enums, traits, generics, modules)
 </testing_approach>
 
@@ -67,8 +67,12 @@ The project uses a comprehensive testing strategy:
    - Run `cargo test` to verify functionality
    - Run `cargo clippy` to check for lint issues
    - Run `cargo fmt` to ensure consistent formatting
-3. **For integration test failures**: Use the detailed diff output to understand formatting differences
+3. **For integration test failures**: 
+   - Use `cargo insta review` to interactively review snapshot changes
+   - Use `cargo insta accept` to accept all pending snapshots
+   - Use `cargo insta reject` to reject pending snapshots
 4. **For new features**: Add both unit tests and integration tests where appropriate
+5. **Snapshot management**: When output format changes, review and approve snapshots carefully
 </development_workflow>
 
 <code_instructions>
