@@ -19,7 +19,7 @@ rustdoc-json = "0.9.6"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 dirs = "5.0"
-rustdoc-types = "0.36.0"  # FORMAT_VERSION = 40 (see README.md for version compatibility)
+rustdoc-types = "0.53.0"  # FORMAT_VERSION = 53 (see README.md for version compatibility)
 
 [dev-dependencies]
 tempfile = "3.10.0"
