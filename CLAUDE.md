@@ -124,9 +124,15 @@ The project uses a comprehensive testing strategy:
 
 <known_issues>
     <version_compatibility>
-        Project is pinned to rustdoc JSON format version 40 (rustdoc-types v0.36.0).
-        This corresponds to Rust nightly builds from around March 2025.
-        May need updates for newer nightly versions.
+        Project follows a single-version policy: each release supports exactly one FORMAT_VERSION.
+        Current support: rustdoc-types v0.36.0 with FORMAT_VERSION 40.
+
+        When updating to newer format versions:
+        1. Update rustdoc-types dependency version
+        2. Update SUPPORTED_VERSION constant in src/main.rs
+        3. Update version compatibility table in README.md
+        4. Test against all fixture files
+        5. Update test fixtures if format changes
     </version_compatibility>
 
     <integration_tests>

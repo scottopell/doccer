@@ -22,7 +22,8 @@
       "WebFetch(domain:docs.rs)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(rustc:*)",
-      "Bash(./target/debug/doccer:*)"
+      "Bash(./target/debug/doccer:*)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": []
   }

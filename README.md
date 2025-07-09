@@ -1,6 +1,8 @@
 # Doccer
 
-Convert Rust documentation from `cargo doc` JSON output to readable text for terminal viewing.
+## Goal
+
+Transforms rustdoc's machine-readable JSON into a concise, ASCII-text representation showing function signatures and documentation comments, optimized for terminal viewing.
 
 ## Usage
 
@@ -97,17 +99,20 @@ doccer --crate-path /path/to/crate --no-default-features --features "specific_fe
 
 ## Version Compatibility
 
-**Important:** Doccer is currently pinned to handle **rustdoc JSON format version 40** (rustdoc-types v0.36.0). This corresponds to Rust nightly builds from around March 2025.
+**Doccer supports a single rustdoc JSON format version per release to maintain simplicity and reliability.**
 
-As Rust nightly continues to evolve and the JSON format version increases beyond 40, we will need to update our `rustdoc-types` dependency to match the newer format. If you encounter parsing errors with newer nightly builds, this likely indicates the format version has changed and an update is needed.
+### Current Version Support
 
-To check your current nightly version:
-```bash
-rustc +nightly --version
-```
+| Component | Version | Purpose |
+|-----------|---------|---------|
+| **rustdoc-types** | 0.36.0 | Rust type definitions for JSON parsing |
+| **FORMAT_VERSION** | 40 | JSON schema version (defined in rustdoc-types) |
+| **Rust nightly** | ~March 2025 | Approximate timeframe for format version 40 |
 
-If you're using a significantly newer nightly and experiencing issues, please check if there's an updated version of Doccer available, or consider using an older nightly that's compatible with format version 40.
+### Version Evolution Strategy
 
-## Goal
+- **Single Version Policy**: Each Doccer release supports exactly one `FORMAT_VERSION`
+- **No Compatibility Ranges**: We do not support multiple format versions simultaneously
+- **Dependency Coupling**: When `FORMAT_VERSION` updates, so does rustdoc-types, and so does Doccer
+- **Clear Documentation**: This table will be updated with each new Doccer release
 
-Transforms rustdoc's machine-readable JSON into a concise, ASCII-text representation showing function signatures and documentation comments, optimized for terminal display.

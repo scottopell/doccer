@@ -208,7 +208,8 @@ fn check_format_version_compatibility(json_content: &str) -> Option<anyhow::Erro
     // Try to extract the format_version field without full parsing
     if let Ok(value) = serde_json::from_str::<serde_json::Value>(json_content) {
         if let Some(format_version) = value.get("format_version").and_then(|v| v.as_u64()) {
-            const SUPPORTED_VERSION: u64 = 40; // rustdoc-types v0.36.0 supports format version 40
+            // Version compatibility - see README.md for complete version support table
+            const SUPPORTED_VERSION: u64 = 40; // Must match rustdoc_types::FORMAT_VERSION (rustdoc-types v0.36.0)
 
             if format_version != SUPPORTED_VERSION {
                 let mut error_msg = format!(
