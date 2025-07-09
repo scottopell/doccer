@@ -36,8 +36,6 @@ The project follows a two-phase architecture:
 <commands>
     <test> cargo test </test>
     <build> cargo build --release </build>
-    <run_integration> cargo test --test integration_tests </run_integration>
-    <run_unit> cargo test --lib </run_unit>
     <lint> cargo clippy -- -D warnings </lint>
     <format> cargo fmt </format>
 </commands>
@@ -65,7 +63,7 @@ The project uses a comprehensive testing strategy:
 
 <development_workflow>
 1. **Before making changes**: Run `cargo test` to ensure all tests pass
-2. **After making changes**: 
+2. **After making changes**:
    - Run `cargo test` to verify functionality
    - Run `cargo clippy` to check for lint issues
    - Run `cargo fmt` to ensure consistent formatting
@@ -83,24 +81,24 @@ The project uses a comprehensive testing strategy:
 
         Comments should be sparing and concise when used.
     </comments>
-    
+
     <CRITICAL_RULES>
         NEVER hardcode test-specific behaviors into the main codebase. This includes:
         - Special handling for specific crate, module, struct, or function names
         - Conditional logic based on specific function or type names
         - Fixed output formats for specific test fixtures
         - Custom indentation rules for specific trait implementations
-        
+
         The core implementation (src/main.rs) must be able to handle ANY Rust crate,
         not just our test fixtures. Hard-coding violates this principle and undermines
         the generality of the solution.
-        
+
         Instead, use unit tests to verify that the generic implementation works
         correctly across all required use cases. If tests are failing because the
         implementation doesn't match specific expectations, either:
         1. Fix the general implementation to handle all cases correctly
         2. Update the test expectations to match the correct output
-        
+
         This separation between code and tests is MANDATORY. Violating this rule
         will result in immediate rejection of any changes.
     </CRITICAL_RULES>

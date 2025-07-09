@@ -19,7 +19,6 @@ mod renderer;
 use parser::*;
 use renderer::*;
 
-
 /// Types of input that can be provided to doccer
 enum InputType {
     /// External crate from docs.rs
@@ -42,55 +41,83 @@ fn parse_json_with_context(json_content: &str, debug: bool) -> Result<Crate> {
     if let Some(version_error) = check_format_version_compatibility(json_content) {
         return Err(version_error);
     }
-    
+
     match serde_json::from_str(json_content) {
         Ok(crate_data) => Ok(crate_data),
         Err(e) => {
             let mut error_msg = format!("Failed to parse JSON documentation: {}", e);
-            
+
             // Add context about JSON size and potential issues
             error_msg.push_str(&format!("\n\nJSON size: {} bytes", json_content.len()));
-            
+
             // If there's a position in the error, provide context
             let line = e.line();
             let column = e.column();
-            
-            error_msg.push_str(&format!("\nError occurred at line {}, column {}", line, column));
-            
+
+            error_msg.push_str(&format!(
+                "\nError occurred at line {}, column {}",
+                line, column
+            ));
+
             // Try to extract a snippet around the error position
             if let Some(snippet) = extract_json_snippet(json_content, line, column) {
                 error_msg.push_str(&format!("\n\nJSON snippet around error:\n{}", snippet));
             }
-            
+
             error_msg.push_str("\n\nThis could be due to:");
             error_msg.push_str("\n- Malformed or truncated JSON");
             error_msg.push_str("\n- Incompatible rustdoc JSON format version");
             error_msg.push_str("\n- Complex nested type structures");
             error_msg.push_str("\n- Large JSON file exceeding parser limits");
-            
+
             if debug {
                 error_msg.push_str("\n\n--- DEBUG INFORMATION ---");
-                error_msg.push_str(&format!("\nJSON content type: {}", 
-                    if json_content.starts_with('{') { "Object" } else { "Unknown" }));
-                error_msg.push_str(&format!("\nJSON starts with: {}", 
-                    &json_content.chars().take(100).collect::<String>()));
-                error_msg.push_str(&format!("\nJSON ends with: {}", 
-                    &json_content.chars().rev().take(100).collect::<String>().chars().rev().collect::<String>()));
-                
+                error_msg.push_str(&format!(
+                    "\nJSON content type: {}",
+                    if json_content.starts_with('{') {
+                        "Object"
+                    } else {
+                        "Unknown"
+                    }
+                ));
+                error_msg.push_str(&format!(
+                    "\nJSON starts with: {}",
+                    &json_content.chars().take(100).collect::<String>()
+                ));
+                error_msg.push_str(&format!(
+                    "\nJSON ends with: {}",
+                    &json_content
+                        .chars()
+                        .rev()
+                        .take(100)
+                        .collect::<String>()
+                        .chars()
+                        .rev()
+                        .collect::<String>()
+                ));
+
                 // Try to identify the structure around the error
                 let line = e.line();
                 let column = e.column();
-                
+
                 if let Some(char_at_error) = json_content.chars().nth(column.saturating_sub(1)) {
-                    error_msg.push_str(&format!("\nCharacter at error position: {:?}", char_at_error));
+                    error_msg.push_str(&format!(
+                        "\nCharacter at error position: {:?}",
+                        char_at_error
+                    ));
                 }
-                
+
                 // Show larger context if debug mode is enabled
-                if let Some(extended_snippet) = extract_extended_json_snippet(json_content, line, column) {
-                    error_msg.push_str(&format!("\n\nExtended JSON context (±200 chars):\n{}", extended_snippet));
+                if let Some(extended_snippet) =
+                    extract_extended_json_snippet(json_content, line, column)
+                {
+                    error_msg.push_str(&format!(
+                        "\n\nExtended JSON context (±200 chars):\n{}",
+                        extended_snippet
+                    ));
                 }
             }
-            
+
             Err(anyhow::anyhow!(error_msg))
         }
     }
@@ -99,52 +126,54 @@ fn parse_json_with_context(json_content: &str, debug: bool) -> Result<Crate> {
 /// Extract a snippet of JSON around an error position
 fn extract_json_snippet(json_content: &str, line: usize, column: usize) -> Option<String> {
     let lines: Vec<&str> = json_content.lines().collect();
-    
+
     if line == 0 || line > lines.len() {
         return None;
     }
-    
+
     let error_line_idx = line - 1; // Convert to 0-based indexing
     let error_line = lines[error_line_idx];
-    
+
     // For single-line JSON (common case), show a focused snippet around the error column
     if lines.len() == 1 {
         let start_col = column.saturating_sub(50);
         let end_col = (column + 50).min(error_line.len());
-        
+
         let snippet_content = &error_line[start_col..end_col];
         let error_col_in_snippet = column - start_col;
-        
+
         let mut snippet = String::new();
         snippet.push_str(&format!(">>> 1: {}\n", snippet_content));
-        
+
         // Add column pointer
         if error_col_in_snippet > 0 {
             let spaces = " ".repeat(7 + error_col_in_snippet.saturating_sub(1));
             snippet.push_str(&format!("{}^ Error here (column {})\n", spaces, column));
         }
-        
+
         return Some(snippet);
     }
-    
+
     // For multi-line JSON, show context around the error line
     let start_line = error_line_idx.saturating_sub(2);
     let end_line = (error_line_idx + 3).min(lines.len());
-    
+
     let mut snippet = String::new();
-    
+
     for (i, line_content) in lines.iter().enumerate().take(end_line).skip(start_line) {
         let line_num = i + 1;
         let prefix = if line_num == line { ">>> " } else { "    " };
         snippet.push_str(&format!("{}{}: {}\n", prefix, line_num, line_content));
-        
+
         // Add column pointer for the error line
         if line_num == line && column > 0 {
-            let spaces = " ".repeat(prefix.len() + format!("{}", line_num).len() + 2 + column.saturating_sub(1));
+            let spaces = " ".repeat(
+                prefix.len() + format!("{}", line_num).len() + 2 + column.saturating_sub(1),
+            );
             snippet.push_str(&format!("{}^ Error here\n", spaces));
         }
     }
-    
+
     Some(snippet)
 }
 
@@ -154,22 +183,22 @@ fn extract_extended_json_snippet(json_content: &str, line: usize, column: usize)
     if json_content.lines().count() == 1 {
         let start_col = column.saturating_sub(200);
         let end_col = (column + 200).min(json_content.len());
-        
+
         let snippet_content = &json_content[start_col..end_col];
         let error_col_in_snippet = column - start_col;
-        
+
         let mut snippet = String::new();
         snippet.push_str(&format!("Extended context: {}\n", snippet_content));
-        
+
         // Add column pointer
         if error_col_in_snippet > 0 {
             let spaces = " ".repeat(18 + error_col_in_snippet.saturating_sub(1));
             snippet.push_str(&format!("{}^ Error here (column {})\n", spaces, column));
         }
-        
+
         return Some(snippet);
     }
-    
+
     // For multi-line JSON, return None as the regular snippet is sufficient
     None
 }
@@ -180,22 +209,29 @@ fn check_format_version_compatibility(json_content: &str) -> Option<anyhow::Erro
     if let Ok(value) = serde_json::from_str::<serde_json::Value>(json_content) {
         if let Some(format_version) = value.get("format_version").and_then(|v| v.as_u64()) {
             const SUPPORTED_VERSION: u64 = 40; // rustdoc-types v0.36.0 supports format version 40
-            
+
             if format_version != SUPPORTED_VERSION {
                 let mut error_msg = format!(
                     "Incompatible rustdoc JSON format version: found {}, expected {}.",
                     format_version, SUPPORTED_VERSION
                 );
-                
+
                 error_msg.push_str("\n\nThis means the JSON was generated with a different version of rustdoc than what doccer supports.");
-                error_msg.push_str(&format!("\nDoccer currently supports rustdoc-types v0.36.0 (JSON format version {}).", SUPPORTED_VERSION));
-                
+                error_msg.push_str(&format!(
+                    "\nDoccer currently supports rustdoc-types v0.36.0 (JSON format version {}).",
+                    SUPPORTED_VERSION
+                ));
+
                 if format_version > SUPPORTED_VERSION {
                     error_msg.push_str(&format!("\nThe JSON (format version {}) was generated with a newer version of rustdoc.", format_version));
                     error_msg.push_str("\n\nSolutions:");
-                    error_msg.push_str("\n1. Update doccer to a newer version that supports format version ");
+                    error_msg.push_str(
+                        "\n1. Update doccer to a newer version that supports format version ",
+                    );
                     error_msg.push_str(&format!("{}", format_version));
-                    error_msg.push_str("\n2. Use an older version of rustdoc that generates format version ");
+                    error_msg.push_str(
+                        "\n2. Use an older version of rustdoc that generates format version ",
+                    );
                     error_msg.push_str(&format!("{}", SUPPORTED_VERSION));
                     error_msg.push_str("\n3. Check if there's a way to specify rustdoc format version in your toolchain");
                 } else {
@@ -203,15 +239,17 @@ fn check_format_version_compatibility(json_content: &str) -> Option<anyhow::Erro
                     error_msg.push_str("\n\nSolutions:");
                     error_msg.push_str("\n1. Update your rustdoc to generate format version ");
                     error_msg.push_str(&format!("{}", SUPPORTED_VERSION));
-                    error_msg.push_str("\n2. Use an older version of doccer that supports format version ");
+                    error_msg.push_str(
+                        "\n2. Use an older version of doccer that supports format version ",
+                    );
                     error_msg.push_str(&format!("{}", format_version));
                 }
-                
+
                 return Some(anyhow::anyhow!(error_msg));
             }
         }
     }
-    
+
     None
 }
 
@@ -296,7 +334,7 @@ struct Cli {
     /// Toolchain to use for stdlib docs (default: nightly)
     #[arg(long, help = "Toolchain to use for stdlib docs (default: nightly)")]
     toolchain: Option<String>,
-    
+
     /// Enable debug mode with verbose JSON parsing error information
     #[arg(long)]
     debug: bool,
