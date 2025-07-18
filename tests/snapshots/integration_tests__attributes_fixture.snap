@@ -1,0 +1,167 @@
+---
+source: tests/integration_tests.rs
+expression: output
+---
+# Crate: attributes
+
+Version: 0.1.0
+
+Comprehensive demonstration of Rust attributes and conditional compilation.
+This module tests doccer's ability to parse and display various compiler
+attributes that provide important metadata about API usage and behavior.
+
+  /// A module that's always compiled but with specific attributes
+  pub mod utility_module
+
+    /// A utility function that might not be used
+    pub fn utility_function() -> bool
+
+    DEPRECATED
+    /// A deprecated utility
+    pub fn old_utility() -> bool
+
+  /// Available only on Unix-like systems
+  pub fn unix_specific_function() -> i32
+
+  /// Available only in debug builds
+  pub fn debug_only_function()
+
+  /// Available only when targeting ARM architecture
+  pub const ARM_SPECIFIC: usize
+
+  pub fn algorithm_impl() -> &'static str
+
+  /// A function that should always be inlined
+  pub fn always_inline_me(x: i32) -> i32
+
+  /// A function that should be aggressively inlined
+  pub fn force_inline(x: i32) -> i32
+
+  /// A function that should never be inlined
+  pub fn never_inline(x: i32) -> i32
+
+  /// A function that is unlikely to be called (cold path)
+  pub fn error_handler() -> never
+
+  /// A function whose return value must be used
+  pub fn important_calculation() -> i32
+
+  /// A function with a custom must_use message
+  pub fn fallible_operation() -> Result<i32, String>
+
+  /// A struct that must be used once created
+  pub struct CriticalSectionGuard {
+
+    pub fn new() -> Self
+  }
+
+  /// Implementation of Drop trait for CriticalSectionGuard
+  impl Drop for CriticalSectionGuard {
+
+    fn drop(&mut self)
+  }
+
+  /// A struct with C-compatible memory layout
+  pub struct CCompatibleStruct {
+    pub a: u32
+    pub b: u16
+    pub c: u8
+  }
+
+  /// Implementation of Display trait for CCompatibleStruct
+  impl Display for CCompatibleStruct {
+
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
+  }
+
+  /// A transparent wrapper around a single field
+  pub struct TransparentWrapper {
+  }
+
+  /// Implementation of Display trait for TransparentWrapper
+  impl Display for TransparentWrapper {
+
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
+  }
+
+  /// A struct with packed memory layout (no padding)
+  pub struct PackedStruct {
+    pub a: u8
+    pub b: u32
+    pub c: u16
+  }
+
+  /// An enum with explicit discriminant representation
+  pub enum StatusCode {
+
+    Success
+
+    Warning
+
+    Error
+
+    Critical
+  }
+
+  DEPRECATED since 0.2.0
+  /// A deprecated function with a message
+  pub fn old_function() -> i32
+
+  /// A function that should not be mangled (for FFI)
+  pub fn c_exported_function() -> i32
+
+  /// A function with a custom export name
+  pub fn renamed_export() -> i32
+
+  /// A function with detailed documentation
+  /// This function performs a complex calculation
+  ///
+  /// # Examples
+  ///
+  /// ```rust
+  /// let result = documented_function(5);
+  /// assert_eq!(result, 10);
+  /// ```
+  pub fn documented_function(x: i32) -> i32
+
+  /// A struct with common derives
+  pub struct CommonStruct {
+    pub field1: String
+    pub field2: i32
+  }
+
+  /// Implementation of Debug trait for CommonStruct
+  impl Debug for CommonStruct {
+
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
+  }
+
+  /// Implementation of Clone trait for CommonStruct
+  impl Clone for CommonStruct {
+
+    fn clone(&self) -> CommonStruct
+  }
+
+  /// Implementation of PartialEq trait for CommonStruct
+  impl PartialEq for CommonStruct {
+
+    fn eq(&self, other: &CommonStruct) -> bool
+  }
+
+  /// Implementation of Eq trait for CommonStruct
+  impl Eq for CommonStruct
+
+  /// Implementation of Hash trait for CommonStruct
+  impl Hash for CommonStruct {
+
+    fn hash(&self, state: &mut __H)
+  }
+
+  /// A function that warns about unused variables
+  pub fn unused_variables_allowed(x: i32, y: i32) -> i32
+
+  /// A function that denies certain warnings
+  pub fn must_use_enforced() -> i32
+
+  /// A function with specific lint configuration
+  pub fn lint_configured(a: i32, b: i32, c: i32, d: i32, e: i32, f: i32, g: i32, h: i32) -> i32

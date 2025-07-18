@@ -107,3 +107,10 @@ fn test_advanced_errors_fixture() {
     let output = run_doccer_on_fixture("advanced_errors");
     insta::assert_snapshot!(output);
 }
+
+#[test]
+fn test_attributes_fixture() {
+    let _settings = snapshots::configure_insta();
+    let output = run_doccer_on_fixture("attributes");
+    insta::assert_snapshot!(output);
+}
