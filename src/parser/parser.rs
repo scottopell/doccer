@@ -26,6 +26,11 @@ impl<'a> ItemParser<'a> {
             return true;
         }
 
+        // Filter out blanket implementations (they are usually generic auto-implementations)
+        if impl_data.get("blanket_impl").is_some() && !impl_data.get("blanket_impl").unwrap().is_null() {
+            return true;
+        }
+
         // Filter out common auto-derived traits that typically shouldn't be shown
         if let Some(trait_ref) = impl_data.get("trait") {
             if let Some(trait_path) = trait_ref.get("path").and_then(|p| p.as_str()) {
@@ -47,6 +52,7 @@ impl<'a> ItemParser<'a> {
                     "ToOwned",
                     "StructuralPartialEq",
                     "ToString",
+                    "IntoFuture",
                 ];
 
                 // Extract just the trait name (last part of the path)
@@ -294,6 +300,54 @@ impl<'a> ItemParser<'a> {
             }
         }
 
+        if let Some(dyn_trait) = type_val.get("dyn_trait") {
+            let lifetime = dyn_trait
+                .get("lifetime")
+                .and_then(|l| l.as_str())
+                .map(|s| s.to_string());
+            
+            let mut traits = Vec::new();
+            if let Some(traits_array) = dyn_trait.get("traits").and_then(|t| t.as_array()) {
+                for trait_item in traits_array {
+                    if let Some(trait_info) = trait_item.get("trait") {
+                        if let Some(path) = trait_info.get("path").and_then(|p| p.as_str()) {
+                            let mut trait_str = path.to_string();
+                            
+                            // Handle associated type constraints
+                            if let Some(args) = trait_info.get("args") {
+                                if let Some(angle_bracketed) = args.get("angle_bracketed") {
+                                    if let Some(constraints) = angle_bracketed.get("constraints").and_then(|c| c.as_array()) {
+                                        if !constraints.is_empty() {
+                                            let mut constraint_strs = Vec::new();
+                                            for constraint in constraints {
+                                                if let Some(name) = constraint.get("name").and_then(|n| n.as_str()) {
+                                                    if let Some(binding) = constraint.get("binding") {
+                                                        if let Some(equality) = binding.get("equality") {
+                                                            if let Some(ty) = equality.get("type") {
+                                                                let constraint_type = self.parse_type(ty);
+                                                                constraint_strs.push(format!("{} = {}", name, constraint_type));
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            if !constraint_strs.is_empty() {
+                                                trait_str.push_str(&format!("<{}>", constraint_strs.join(", ")));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            traits.push(trait_str);
+                        }
+                    }
+                }
+            }
+            
+            return RustType::DynTrait { traits, lifetime };
+        }
+
         RustType::Unknown
     }
 
@@ -336,7 +390,41 @@ impl<'a> ItemParser<'a> {
             }
         }
 
-        // TODO: Parse where clauses
+        // Parse where clauses
+        if let Some(where_predicates) = generics.get("where_predicates").and_then(|p| p.as_array()) {
+            for predicate in where_predicates {
+                if let Some(bound_predicate) = predicate.get("bound_predicate") {
+                    if let Some(type_info) = bound_predicate.get("type") {
+                        // Get the type being constrained
+                        let type_name = if let Some(generic_name) = type_info.get("generic").and_then(|g| g.as_str()) {
+                            generic_name.to_string()
+                        } else {
+                            // For more complex types, we'd need to parse them fully
+                            "Self".to_string()
+                        };
+                        
+                        // Parse the bounds
+                        let mut bounds = Vec::new();
+                        if let Some(bounds_array) = bound_predicate.get("bounds").and_then(|b| b.as_array()) {
+                            for bound in bounds_array {
+                                if let Some(trait_bound) = bound.get("trait_bound") {
+                                    if let Some(trait_ref) = trait_bound.get("trait") {
+                                        if let Some(path) = trait_ref.get("path").and_then(|p| p.as_str()) {
+                                            bounds.push(path.to_string());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if !bounds.is_empty() {
+                            let where_clause = format!("{}: {}", type_name, bounds.join(" + "));
+                            where_clauses.push(where_clause);
+                        }
+                    }
+                }
+            }
+        }
 
         Generics {
             params,
@@ -387,12 +475,20 @@ impl<'a> ItemParser<'a> {
             }
         }
 
+        let mut is_async = false;
+        if let Some(header) = func_data.get("header") {
+            if let Some(async_flag) = header.get("is_async") {
+                is_async = async_flag.as_bool().unwrap_or(false);
+            }
+        }
+
         let signature = FunctionSignature {
             name,
             visibility,
             generics,
             inputs,
             output,
+            is_async,
         };
 
         Ok(Some(ParsedFunction {
@@ -423,6 +519,35 @@ impl<'a> ItemParser<'a> {
 
         let mut methods = Vec::new();
         let mut trait_impls = Vec::new();
+        let mut fields = Vec::new();
+
+        // Parse struct fields
+        if let Some(kind) = struct_data.get("kind") {
+            if let Some(plain) = kind.get("plain") {
+                if let Some(field_ids) = plain.get("fields") {
+                    if let Some(field_array) = field_ids.as_array() {
+                        for field_id in field_array {
+                            if let Some(field_id_num) = field_id.as_u64() {
+                                let field_id = Id(field_id_num as u32);
+                                if let Some(field_item) = self.crate_data.index.get(&field_id) {
+                                    if let ItemEnum::StructField(field_type) = &field_item.inner {
+                                        let field_name = field_item.name.clone().unwrap_or_else(|| "unnamed".to_string());
+                                        let parsed_field = ParsedField {
+                                            name: field_name,
+                                            visibility: field_item.visibility.clone(),
+                                            field_type: self.parse_type(&serde_json::to_value(field_type).unwrap_or_default()),
+                                            docs: field_item.docs.clone(),
+                                            deprecation: field_item.deprecation.clone(),
+                                        };
+                                        fields.push(parsed_field);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         // Parse methods from impl blocks
         if let Some(impls) = struct_data.get("impls") {
@@ -481,6 +606,7 @@ impl<'a> ItemParser<'a> {
             generics,
             docs: item.docs.clone(),
             deprecation: item.deprecation.clone(),
+            fields,
             methods,
             trait_impls,
         }))

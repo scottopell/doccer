@@ -82,6 +82,10 @@ pub enum RustType {
         base: String,
         name: String,
     },
+    DynTrait {
+        traits: Vec<String>,
+        lifetime: Option<String>,
+    },
     Unit,
     Unknown,
 }
@@ -135,6 +139,15 @@ impl std::fmt::Display for RustType {
                 }
             }
             RustType::QualifiedPath { base, name } => write!(f, "{}::{}", base, name),
+            RustType::DynTrait { traits, lifetime } => {
+                let mut result = "dyn ".to_string();
+                if let Some(lifetime_str) = lifetime {
+                    result.push_str(lifetime_str);
+                    result.push(' ');
+                }
+                result.push_str(&traits.join(" + "));
+                write!(f, "{}", result)
+            }
             RustType::Unit => write!(f, "()"),
             RustType::Unknown => write!(f, "..."),
         }
@@ -167,11 +180,21 @@ pub struct FunctionSignature {
     pub generics: Generics,
     pub inputs: Vec<(String, RustType)>,
     pub output: RustType,
+    pub is_async: bool,
 }
 
 #[derive(Debug, Clone)]
 pub struct ParsedFunction {
     pub signature: FunctionSignature,
+    pub docs: Option<String>,
+    pub deprecation: Option<Deprecation>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ParsedField {
+    pub name: String,
+    pub visibility: Visibility,
+    pub field_type: RustType,
     pub docs: Option<String>,
     pub deprecation: Option<Deprecation>,
 }
@@ -183,6 +206,7 @@ pub struct ParsedStruct {
     pub generics: Generics,
     pub docs: Option<String>,
     pub deprecation: Option<Deprecation>,
+    pub fields: Vec<ParsedField>,
     pub methods: Vec<ParsedFunction>,
     pub trait_impls: Vec<ParsedTraitImpl>,
 }

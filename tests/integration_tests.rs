@@ -86,3 +86,24 @@ fn test_deprecation_fixture() {
     let output = run_doccer_on_fixture("deprecation");
     insta::assert_snapshot!(output);
 }
+
+#[test]
+fn test_async_await_fixture() {
+    let _settings = snapshots::configure_insta();
+    let output = run_doccer_on_fixture("async_await");
+    insta::assert_snapshot!(output);
+}
+
+#[test]
+fn test_trait_objects_fixture() {
+    let _settings = snapshots::configure_insta();
+    let output = run_doccer_on_fixture("trait_objects");
+    insta::assert_snapshot!(output);
+}
+
+#[test]
+fn test_advanced_errors_fixture() {
+    let _settings = snapshots::configure_insta();
+    let output = run_doccer_on_fixture("advanced_errors");
+    insta::assert_snapshot!(output);
+}

@@ -1,0 +1,133 @@
+---
+source: tests/integration_tests.rs
+expression: output
+---
+# Crate: advanced_errors
+
+Version: 0.1.0
+
+Advanced error handling patterns demonstrating custom error types,
+error chaining, Result operations, and complex error hierarchies.
+
+  /// A custom error type demonstrating basic Error trait implementation
+  pub struct CustomError {
+    pub message: String
+    pub code: i32
+  }
+
+  /// Implementation of Debug trait for CustomError
+  impl Debug for CustomError {
+
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
+  }
+
+  /// Implementation of Display trait for CustomError
+  impl Display for CustomError {
+
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
+  }
+
+  /// Implementation of Error trait for CustomError
+  impl Error for CustomError
+
+  /// An error type that wraps other errors, demonstrating error chaining
+  pub enum ChainedError {
+
+    Io(io::Error)
+
+    Parse(std::num::ParseIntError)
+
+    Custom(CustomError)
+
+    Network { url: String, status: u16 }
+  }
+
+  /// A function that demonstrates the ? operator with multiple error types
+  pub fn complex_operation(filename: &str, number_str: &str) -> Result<i32, ChainedError>
+
+  /// Demonstrates Result chaining with map, and_then, or_else
+  pub fn result_chaining_example(input: &str) -> Result<String, ChainedError>
+
+  /// A more complex error hierarchy with associated types
+  pub trait ProcessingError {
+
+    type Context
+
+    fn context(&self) -> &Self::Context
+
+    fn severity(&self) -> ErrorSeverity
+  }
+
+  pub enum ErrorSeverity {
+
+    Low
+
+    Medium
+
+    High
+
+    Critical
+  }
+
+  /// A context-aware error type
+  pub struct ContextualError<T> {
+    pub inner: Box<dyn Error + Send + Sync>
+    pub context: T
+    pub severity: ErrorSeverity
+  }
+
+  /// Implementation of Debug trait for ContextualError
+  impl Debug for ContextualError<T> {
+
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
+  }
+
+  /// Implementation of Display trait for ContextualError
+  impl Display for ContextualError<T> {
+
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result
+  }
+
+  /// Implementation of Error trait for ContextualError
+  impl Error for ContextualError<T> {
+
+    fn source(&self) -> Option<&dyn 'static Error>
+  }
+
+  /// Implementation of ProcessingError trait for ContextualError
+  impl ProcessingError for ContextualError<T> {
+
+    type Context = T
+
+    fn context(&self) -> &Self::Context
+
+    fn severity(&self) -> ErrorSeverity
+  }
+
+  /// A trait for error recovery strategies
+  pub trait ErrorRecovery<E> {
+
+    type Output
+
+    fn recover(self, error: E) -> Self::Output
+  }
+
+  /// Demonstrates error recovery patterns
+  pub struct RetryStrategy {
+    pub max_attempts: u32
+    pub delay_ms: u64
+  }
+
+  /// Implementation of ErrorRecovery trait for RetryStrategy
+  impl ErrorRecovery for RetryStrategy {
+
+    type Output = Result<(), Error>
+
+    fn recover(self, error: io::Error) -> Self::Output
+  }
+
+  /// Helper function for creating contextual errors
+  pub fn with_context<T, E>(result: Result<T, E>, context: String, severity: ErrorSeverity) -> Result<T, ContextualError<String>> where E: Error + Send + Sync
+
+  /// Demonstrates error aggregation patterns
+  pub fn aggregate_errors(operations: Vec<...>) -> Result<Vec<i32>, Vec<ChainedError>>

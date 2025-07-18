@@ -13,6 +13,8 @@ basic parsing and rendering functionality.
 
   /// A simple person struct
   pub struct Person {
+    pub name: String
+    pub age: u32
 
       /// Creates a new person
       pub fn new(name: String, age: u32) -> Self

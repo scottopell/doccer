@@ -46,6 +46,8 @@ patterns to validate hierarchical structure parsing.
 
         /// HTTP request structure
         pub struct Request {
+          pub method: Method
+          pub path: String
         }
 
       /// TCP-specific functionality
@@ -53,10 +55,12 @@ patterns to validate hierarchical structure parsing.
 
         /// TCP socket options
         pub struct Options {
+          pub keep_alive: bool
         }
 
     /// A connection struct
     pub struct Connection {
+      pub host: String
 
       /// Creates a new connection
       pub fn new(host: String, port: u16) -> Self

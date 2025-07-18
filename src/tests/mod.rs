@@ -73,7 +73,8 @@ mod formatting_tests {
                                 lifetime: None, 
                                 mutable: false, 
                                 inner: Box::new(RustType::Primitive("str".to_string())) 
-                            }
+                            },
+                            is_async: false,
                         },
                         docs: None,
                         deprecation: None,
@@ -133,7 +134,8 @@ mod formatting_tests {
                                     RustType::Unit,
                                     RustType::Primitive("String".to_string())
                                 ]
-                            }
+                            },
+                            is_async: false,
                         },
                         docs: None,
                         deprecation: None,
@@ -160,7 +162,8 @@ mod formatting_tests {
                                     inner: Box::new(RustType::Primitive("str".to_string()))
                                 })
                             ],
-                            output: RustType::Unit
+                            output: RustType::Unit,
+                            is_async: false,
                         },
                         docs: None,
                         deprecation: Some(Deprecation {
@@ -237,7 +240,8 @@ mod formatting_tests {
                             output: RustType::Path {
                                 path: "std::fmt::Result".to_string(),
                                 generics: vec![]
-                            }
+                            },
+                            is_async: false,
                         },
                         docs: None,
                         deprecation: None,
@@ -300,7 +304,8 @@ mod formatting_tests {
                             output: RustType::Path {
                                 path: "std::fmt::Result".to_string(),
                                 generics: vec![]
-                            }
+                            },
+                            is_async: false,
                         },
                         docs: None,
                         deprecation: None,
@@ -373,6 +378,7 @@ mod formatting_tests {
                     ("content".to_string(), RustType::Primitive("String".to_string()))
                 ],
                 output: RustType::Unit,
+                is_async: false,
             },
             docs: None,
             deprecation: None,
@@ -409,7 +415,8 @@ mod formatting_tests {
                     }),
                     ("seconds".to_string(), RustType::Primitive("u32".to_string()))
                 ],
-                output: RustType::Unit,  // Explicit unit type
+                output: RustType::Unit,
+                is_async: false,  // Explicit unit type
             },
             docs: None,
             deprecation: None,
@@ -450,7 +457,8 @@ mod formatting_tests {
                         inner: Box::new(RustType::Primitive("str".to_string()))
                     })
                 ],
-                output: RustType::Unit,  // Missing output means unit
+                output: RustType::Unit,
+                is_async: false,  // Missing output means unit
             },
             docs: None,
             deprecation: None,
@@ -489,6 +497,7 @@ mod formatting_tests {
                 ],
                 where_clauses: vec![],
             },
+            fields: vec![],
             methods: vec![],  // Empty for test
             trait_impls: vec![],
             docs: None,
@@ -539,6 +548,7 @@ mod formatting_tests {
                 ],
                 where_clauses: vec![],
             },
+            fields: vec![],
             methods: vec![],  // Empty for test
             trait_impls: vec![],
             docs: None,
@@ -641,7 +651,8 @@ mod formatting_tests {
                                             })
                                         })
                                     ],
-                                    output: RustType::Primitive("bool".to_string())
+                                    output: RustType::Primitive("bool".to_string()),
+                                    is_async: false,
                                 },
                                 docs: None,
                                 deprecation: None,
@@ -699,6 +710,7 @@ mod formatting_tests {
                     ("seconds".to_string(), RustType::Primitive("u32".to_string()))
                 ],
                 output: RustType::Unit,
+                is_async: false,
             },
             docs: Some("Old method for setting timeout in seconds".to_string()),
             deprecation: Some(Deprecation {
@@ -747,6 +759,7 @@ mod formatting_tests {
                         })
                     ],
                     output: RustType::Unit,
+                    is_async: false,
                 },
                 docs: Some("Old way of handling errors".to_string()),
                 deprecation: Some(Deprecation {
@@ -806,7 +819,8 @@ mod formatting_tests {
                                     RustType::Unit,
                                     RustType::Primitive("String".to_string())
                                 ]
-                            }
+                            },
+                            is_async: false,
                         },
                         docs: None,
                         deprecation: None,
@@ -833,7 +847,8 @@ mod formatting_tests {
                                     inner: Box::new(RustType::Primitive("str".to_string()))
                                 })
                             ],
-                            output: RustType::Unit
+                            output: RustType::Unit,
+                            is_async: false,
                         },
                         docs: None,
                         deprecation: Some(Deprecation {

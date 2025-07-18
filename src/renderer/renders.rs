@@ -21,6 +21,11 @@ impl Render for ParsedFunction {
         // Add visibility
         signature.push_str(&type_renderer.render_visibility(&sig.visibility));
 
+        // Add async keyword if applicable
+        if sig.is_async {
+            signature.push_str("async ");
+        }
+
         signature.push_str("fn ");
         signature.push_str(&sig.name);
 
@@ -107,6 +112,19 @@ impl Render for ParsedStruct {
         // Open curly brace
         signature.push_str(" {");
         output.push_str(&format!("{}{}\n", indent, signature));
+
+        // Render fields
+        for field in &self.fields {
+            let field_indent = "  ".repeat(context.depth + 1);
+            let field_visibility = type_renderer.render_visibility(&field.visibility);
+            let field_signature = format!("{}{}{}: {}", 
+                field_indent, 
+                field_visibility, 
+                field.name, 
+                type_renderer.render_type(&field.field_type)
+            );
+            output.push_str(&format!("{}\n", field_signature));
+        }
 
         // Only add newline if there are methods
         if !self.methods.is_empty() {

@@ -13,6 +13,7 @@ to validate advanced parsing functionality.
 
   /// A generic container that holds a value
   pub struct Container<T> {
+    pub value: T
 
     /// Creates a new container
     pub fn new(value: T) -> Self
@@ -26,6 +27,8 @@ to validate advanced parsing functionality.
 
   /// A generic pair of values
   pub struct Pair<T, U> {
+    pub first: T
+    pub second: U
   }
 
   /// A trait for types that can be compared
@@ -50,6 +53,7 @@ to validate advanced parsing functionality.
 
   /// A struct with lifetime parameters
   pub struct Reference<'a> {
+    pub data: &'a str
 
     /// Creates a new reference
     pub fn new(data: &'a str) -> Self

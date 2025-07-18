@@ -1,0 +1,101 @@
+---
+source: tests/integration_tests.rs
+expression: output
+---
+# Crate: async_await
+
+Version: 0.1.0
+
+# Async/Await Test Fixture
+
+This fixture demonstrates various async/await patterns in Rust,
+including async functions, trait methods, and complex Future types.
+
+  /// Simple async function that returns a future
+  ///
+  /// This demonstrates the basic async fn syntax and how it appears
+  /// in documentation.
+  pub async fn simple_async_function() -> Result<String, Box<dyn std::error::Error>>
+
+  /// Async function with parameters and complex return type
+  ///
+  /// Shows how async functions with multiple parameters and complex
+  /// return types are documented.
+  pub async fn complex_async_function(input: &str, timeout: u64) -> Result<Vec<String>, std::io::Error>
+
+  /// Async function returning a boxed future
+  ///
+  /// This pattern is common when you need to return different future types
+  /// from the same function.
+  pub fn boxed_future_function() -> std::pin::Pin<Box<dyn Future<Output = i32> + Send>>
+
+  /// Async trait with various method types
+  ///
+  /// Demonstrates async trait methods and their documentation.
+  pub trait AsyncTrait {
+
+    /// Async method with default implementation
+    fn async_method(&self) -> String
+
+    /// Async method without default implementation
+    fn required_async_method(&self) -> Result<(), Box<dyn std::error::Error>>
+
+    /// Method returning a boxed future
+    fn future_method(&self) -> Pin<Box<dyn '_ Future<Output = bool> + Send>>
+  }
+
+  /// Struct implementing async trait
+  ///
+  /// Shows how async trait implementations are documented.
+  pub struct AsyncStruct {
+    pub value: i32
+  }
+
+  /// Implementation of AsyncTrait trait for AsyncStruct
+  impl AsyncTrait for AsyncStruct {
+
+    fn required_async_method(&self) -> Result<(), Box<dyn std::error::Error>>
+
+    fn future_method(&self) -> Pin<Box<dyn '_ Future<Output = bool> + Send>>
+  }
+
+  /// Custom Future implementation
+  ///
+  /// Demonstrates manual Future implementation and how it's documented.
+  pub struct CustomFuture {
+
+    pub fn new() -> Self
+  }
+
+  /// Implementation of Future trait for CustomFuture
+  impl Future for CustomFuture {
+
+    type Output = String
+
+    fn poll(self, _cx: &mut Context) -> Poll<Self::Output>
+  }
+
+  /// Async function with Send + Sync bounds
+  ///
+  /// Shows how async functions with trait bounds are documented.
+  pub async fn bounded_async_function<T>() -> T where T: Send + Sync + Default
+
+  /// Function that takes an async closure
+  ///
+  /// Shows how functions accepting async closures are documented.
+  pub async fn use_async_closure<T>(closure: AsyncClosure<T>) -> T
+
+  /// Async generator-like function
+  ///
+  /// Demonstrates async functions that yield multiple values over time.
+  pub async fn async_generator(count: usize) -> Vec<i32>
+
+  /// Stream-like async iterator
+  ///
+  /// Shows how async stream patterns are documented.
+  pub struct AsyncIterator {
+
+    pub fn new(max: usize) -> Self
+
+    pub async fn next(&mut self) -> Option<usize>
+  }

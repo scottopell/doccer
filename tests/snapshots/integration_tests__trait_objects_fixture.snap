@@ -1,0 +1,209 @@
+---
+source: tests/integration_tests.rs
+expression: output
+---
+# Crate: trait_objects
+
+Version: 0.1.0
+
+# Trait Objects & Dynamic Dispatch Test Fixture
+
+This fixture demonstrates various trait object patterns in Rust,
+including dyn Trait usage, object safety, and dynamic dispatch.
+
+  /// Object-safe trait for dynamic dispatch
+  ///
+  /// This trait is designed to be object-safe, allowing it to be used
+  /// as a trait object with `dyn Draw`.
+  pub trait Draw {
+
+    /// Draw the object to some output
+    fn draw(&self) -> String
+
+    /// Get the name of the drawable object
+    fn name(&self) -> &str
+  }
+
+  /// Another object-safe trait for composition
+  ///
+  /// Demonstrates multiple trait objects in the same codebase.
+  pub trait Clickable {
+
+    /// Handle click events
+    fn on_click(&mut self)
+
+    /// Check if the object is clickable
+    fn is_clickable(&self) -> bool
+  }
+
+  /// Trait that extends another trait
+  ///
+  /// Shows trait inheritance and how it works with trait objects.
+  pub trait Interactive {
+
+    /// Handle focus events
+    fn on_focus(&mut self)
+  }
+
+  /// Simple struct implementing Draw
+  ///
+  /// Basic implementation to demonstrate trait objects.
+  pub struct Circle {
+    pub radius: f64
+  }
+
+  /// Implementation of Draw trait for Circle
+  impl Draw for Circle {
+
+    fn draw(&self) -> String
+
+    fn name(&self) -> &str
+  }
+
+  /// Implementation of Clickable trait for Circle
+  impl Clickable for Circle {
+
+    fn on_click(&mut self)
+  }
+
+  /// Implementation of Interactive trait for Circle
+  impl Interactive for Circle {
+
+    fn on_focus(&mut self)
+  }
+
+  /// Another struct implementing Draw
+  ///
+  /// Shows multiple implementations of the same trait.
+  pub struct Rectangle {
+    pub width: f64
+    pub height: f64
+  }
+
+  /// Implementation of Draw trait for Rectangle
+  impl Draw for Rectangle {
+
+    fn draw(&self) -> String
+
+    fn name(&self) -> &str
+  }
+
+  /// Implementation of Clickable trait for Rectangle
+  impl Clickable for Rectangle {
+
+    fn on_click(&mut self)
+  }
+
+  /// Function taking a trait object by reference
+  ///
+  /// Demonstrates `&dyn Trait` usage in function parameters.
+  pub fn draw_shape(shape: &dyn Draw) -> String
+
+  /// Function taking a mutable trait object by reference
+  ///
+  /// Shows mutable borrowing of trait objects.
+  pub fn click_shape(shape: &mut dyn Clickable)
+
+  /// Function taking a boxed trait object
+  ///
+  /// Demonstrates `Box<dyn Trait>` ownership patterns.
+  pub fn consume_shape(shape: Box<dyn Draw>) -> String
+
+  /// Function returning a boxed trait object
+  ///
+  /// Shows how to return trait objects from functions.
+  pub fn create_circle(radius: f64) -> Box<dyn Draw>
+
+  /// Function returning different trait objects
+  ///
+  /// Demonstrates dynamic dispatch with conditional returns.
+  pub fn create_shape(shape_type: &str, size: f64) -> Box<dyn Draw>
+
+  /// Struct containing a trait object
+  ///
+  /// Shows how to store trait objects in structs.
+  pub struct Canvas {
+    pub shapes: Vec<Box<dyn Draw>>
+
+    pub fn new() -> Self
+
+    pub fn add_shape(&mut self, shape: Box<dyn Draw>)
+
+    pub fn draw_all(&self) -> Vec<String>
+  }
+
+  /// Generic function with trait object conversion
+  ///
+  /// Demonstrates converting from generic types to trait objects.
+  pub fn as_drawable<T: Draw>(item: T) -> Box<dyn Draw>
+
+  /// Trait that combines multiple traits
+  ///
+  /// Shows how to combine multiple traits for trait objects.
+  pub trait DisplayableDrawable {
+
+  }
+
+  /// Function with complex trait object bounds
+  ///
+  /// Demonstrates trait objects with Send + Sync bounds.
+  pub fn process_drawable(drawable: Box<dyn Draw + Send + Sync>) -> String
+
+  /// Non-object-safe trait (for contrast)
+  ///
+  /// This trait cannot be used as a trait object due to generic methods.
+  pub trait NonObjectSafe {
+
+    /// Generic method makes this trait non-object-safe
+    fn generic_method(&self, value: T) -> T
+
+    /// Associated function makes this trait non-object-safe
+    fn associated_function() -> Self
+  }
+
+  /// Trait with associated types
+  ///
+  /// Shows trait objects with associated types.
+  pub trait Producer {
+
+    type Item
+
+    fn produce(&self) -> Self::Item
+  }
+
+  /// Concrete implementation of Producer
+  pub struct StringProducer {
+    pub prefix: String
+  }
+
+  /// Implementation of Producer trait for StringProducer
+  impl Producer for StringProducer {
+
+    type Item = String
+
+    fn produce(&self) -> Self::Item
+  }
+
+  /// Function working with trait objects with associated types
+  ///
+  /// Note: This is tricky because you can't directly use `dyn Producer`
+  /// without specifying the associated type.
+  pub fn use_string_producer(producer: &dyn Producer<Item = String>) -> String
+
+  /// Trait object with lifetime parameters
+  ///
+  /// Shows how trait objects interact with lifetimes.
+  pub trait Borrowing<'a> {
+
+    fn borrow_str(&self) -> &'a str
+  }
+
+  /// Function taking trait object with lifetime
+  ///
+  /// Demonstrates lifetime parameters in trait objects.
+  pub fn use_borrowing<'a>(borrower: &dyn Borrowing) -> &'a str
+
+  /// Higher-ranked trait bounds with trait objects
+  ///
+  /// Shows `for<'a>` syntax with trait objects.
+  pub fn use_higher_ranked_trait_object(f: Box<dyn Fn>) -> Box<dyn Fn>

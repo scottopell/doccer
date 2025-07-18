@@ -13,6 +13,9 @@ deprecation notice rendering functionality.
 
   /// A simple struct with deprecated field
   pub struct Config {
+    pub api_key: String
+    pub timeout: u32
+    pub timeout_ms: u32
 
     /// Creates a new config
     pub fn new(api_key: String, timeout_ms: u32) -> Self

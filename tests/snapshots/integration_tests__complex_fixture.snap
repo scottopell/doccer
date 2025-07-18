@@ -47,6 +47,7 @@ storage.insert("key", "value");
 
       /// A cached string with metadata
       pub struct CachedString {
+        pub content: String
       }
 
       /// Implementation of Clone trait for CachedString
@@ -63,6 +64,7 @@ storage.insert("key", "value");
 
     /// A generic storage container with complex constraints
     pub struct Storage<K, V> where K: Clone + Debug + PartialEq + std::hash::Hash, V: Clone + Debug {
+      pub capacity: usize
 
       /// Creates a new storage with default capacity
       ///
@@ -98,6 +100,7 @@ storage.insert("key", "value");
 
     /// Cache implementation with lifetime parameters
     pub struct Cache<'a, T: Cacheable> {
+      pub data: &'a [T]
 
       /// Creates a new cache
       pub fn new(data: &'a [T]) -> Self
@@ -133,6 +136,9 @@ storage.insert("key", "value");
 
       /// HTTP request
       pub struct HttpRequest {
+        pub method: String
+        pub path: String
+        pub headers: std::collections::HashMap<String, String>
       }
 
       /// Implementation of Protocol trait for Http
@@ -145,6 +151,8 @@ storage.insert("key", "value");
 
       /// HTTP response
       pub struct HttpResponse {
+        pub status: u16
+        pub body: String
       }
 
       /// Implementation of Protocol trait for Http
@@ -157,6 +165,7 @@ storage.insert("key", "value");
 
       /// HTTP error
       pub struct HttpError {
+        pub message: String
       }
 
       /// Implementation of Debug trait for HttpError
@@ -191,6 +200,8 @@ storage.insert("key", "value");
 
     /// A point in 2D space
     pub struct Point<T: Copy> {
+      pub x: T
+      pub y: T
 
       /// Creates a new point
       pub fn new(x: T, y: T) -> Self
