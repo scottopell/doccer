@@ -23,7 +23,10 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(rustc:*)",
       "Bash(./target/debug/doccer:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(cargo insta test:*)",
+      "Bash(cargo insta:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }
