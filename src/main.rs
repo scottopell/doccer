@@ -1,7 +1,6 @@
 use anyhow::{Context, Result};
 use clap::Parser;
-use rustdoc_types::{Crate, Deprecation, Id, Item, ItemEnum, Module, Visibility};
-use serde::Deserialize;
+use rustdoc_types::{Crate, Id, ItemEnum};
 use std::env;
 use std::fs;
 use std::io;
@@ -178,7 +177,7 @@ fn extract_json_snippet(json_content: &str, line: usize, column: usize) -> Optio
 }
 
 /// Extract an extended snippet of JSON around an error position for debug mode
-fn extract_extended_json_snippet(json_content: &str, line: usize, column: usize) -> Option<String> {
+fn extract_extended_json_snippet(json_content: &str, _line: usize, column: usize) -> Option<String> {
     // For single-line JSON, extract a larger context
     if json_content.lines().count() == 1 {
         let start_col = column.saturating_sub(200);
@@ -434,14 +433,14 @@ fn fetch_from_docs_rs(
     // Check if we need to append .json.zst to the URL if we got a redirect to a directory
     if final_url.path().ends_with("/") {
         debug!("URL ends with directory, retrying with .json.zst extension");
-        let new_url = format!("{}json.zst", final_url);
+        let new_url = format!("{final_url}json.zst");
         debug!("New URL: {}", new_url);
 
         let response = client
             .get(&new_url)
             .header("User-Agent", concat!("doccer/", env!("CARGO_PKG_VERSION")))
             .send()
-            .with_context(|| format!("Failed to fetch documentation from {}", new_url))?;
+            .with_context(|| format!("Failed to fetch documentation from {new_url}"))?;
 
         if response.status().as_u16() == 404 {
             return Err(anyhow::anyhow!(
@@ -604,9 +603,9 @@ fn load_stdlib_docs(crate_name: &str, toolchain: Option<&str>) -> Result<String>
 
     let json_path = home_dir
         .join(".rustup/toolchains")
-        .join(format!("{}-{}", toolchain, target_triple))
+        .join(format!("{toolchain}-{target_triple}"))
         .join("share/doc/rust/json")
-        .join(format!("{}.json", crate_name));
+        .join(format!("{crate_name}.json"));
 
     if json_path.exists() {
         info!("Loading stdlib JSON from: {}", json_path.display());
@@ -703,11 +702,11 @@ fn generate_local_crate_docs(
     let manifest_path = if let Some(pkg) = package {
         // For workspace packages, find the specific package's Cargo.toml
         let potential_paths = [
-            crate_path.join(format!("{}/Cargo.toml", pkg)),
-            crate_path.join(format!("packages/{}/Cargo.toml", pkg)),
-            crate_path.join(format!("crates/{}/Cargo.toml", pkg)),
-            crate_path.join(format!("libs/{}/Cargo.toml", pkg)),
-            crate_path.join(format!("services/{}/Cargo.toml", pkg)),
+            crate_path.join(format!("{pkg}/Cargo.toml")),
+            crate_path.join(format!("packages/{pkg}/Cargo.toml")),
+            crate_path.join(format!("crates/{pkg}/Cargo.toml")),
+            crate_path.join(format!("libs/{pkg}/Cargo.toml")),
+            crate_path.join(format!("services/{pkg}/Cargo.toml")),
         ];
 
         let mut found_path = None;
@@ -865,7 +864,7 @@ fn main() -> Result<()> {
     let renderer = ParsedRenderer;
     let output = renderer.render(&parsed_module, crate_data.crate_version.as_deref());
 
-    println!("{}", output);
+    println!("{output}");
 
     Ok(())
 }

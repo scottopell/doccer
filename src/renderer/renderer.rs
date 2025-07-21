@@ -1,6 +1,5 @@
 use crate::parser::*;
 use crate::renderer::traits::*;
-use rustdoc_types::Visibility;
 
 pub struct ParsedRenderer;
 
@@ -37,35 +36,6 @@ impl ParsedRenderer {
             output.push_str(&item.render(&context));
         }
 
-        // Render re-exports section if any exist
-        let reexports: Vec<_> = module
-            .items
-            .iter()
-            .filter_map(|item| match item {
-                ParsedItem::ReExport(re) => Some(re),
-                _ => None,
-            })
-            .collect();
-
-        if !reexports.is_empty() {
-            output.push_str("# Re-exports\n\n");
-
-            // Find if any re-export has documentation
-            let doc_comment = reexports
-                .iter()
-                .find_map(|re| re.docs.as_ref())
-                .map(|docs| format!("  /// {}\n", docs));
-
-            // If we have a doc comment, use it for all re-exports
-            if let Some(ref doc) = doc_comment {
-                output.push_str(doc);
-            }
-
-            // Render all re-exports
-            for reexport in reexports {
-                output.push_str(&format!("  pub use {}\n", reexport.path));
-            }
-        }
 
         output
     }

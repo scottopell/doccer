@@ -160,16 +160,6 @@ impl<'a> ItemParser<'a> {
         Ok(None)
     }
 
-    fn convert_visibility(&self, vis: &Visibility) -> crate::parser::types::ParsedVisibility {
-        match vis {
-            Visibility::Public => crate::parser::types::ParsedVisibility::Public,
-            Visibility::Default => crate::parser::types::ParsedVisibility::Private,
-            Visibility::Crate => crate::parser::types::ParsedVisibility::Crate,
-            Visibility::Restricted { parent: _, path } => {
-                crate::parser::types::ParsedVisibility::Restricted(path.clone())
-            }
-        }
-    }
 
     fn parse_type(&self, type_val: &serde_json::Value) -> RustType {
         // Handle null values as unit type
@@ -860,7 +850,6 @@ impl<'a> ItemParser<'a> {
         };
 
         Ok(Some(ParsedMacro {
-            name,
             signature,
             docs: item.docs.clone(),
         }))
@@ -911,37 +900,6 @@ impl<'a> ItemParser<'a> {
         Ok(None)
     }
 
-    fn parse_use(
-        &self,
-        item: &Item,
-        use_data: &serde_json::Value,
-    ) -> Result<Option<ParsedReExport>> {
-        if let Some(use_obj) = use_data.as_object() {
-            let source = use_obj
-                .get("source")
-                .and_then(|s| s.as_str())
-                .unwrap_or("unknown")
-                .to_string();
-
-            let name = use_obj
-                .get("name")
-                .and_then(|n| n.as_str())
-                .unwrap_or_else(|| {
-                    // Extract name from source path if not provided
-                    source.split("::").last().unwrap_or("unknown")
-                })
-                .to_string();
-
-            let docs = item.docs.clone();
-
-            return Ok(Some(ParsedReExport {
-                path: source,
-                name,
-                docs,
-            }));
-        }
-        Ok(None)
-    }
 
     fn parse_trait_impl_item(&self, item: &Item) -> Result<Option<ParsedTraitImplItem>> {
         match &item.inner {

@@ -1,59 +1,7 @@
 use rustdoc_types::{Deprecation, Visibility};
-use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
-pub struct ExternalCrate {
-    #[allow(dead_code)] // Preserved to match rustdoc JSON format
-    pub name: String,
-    #[allow(dead_code)] // Preserved to match rustdoc JSON format
-    pub html_root_url: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-#[allow(dead_code)] // This struct is not used but preserved for documentation purposes
-pub struct ItemSummary {
-    pub crate_id: u32,
-    pub path: Vec<String>,
-    pub kind: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct Span {
-    #[allow(dead_code)] // Preserved to match rustdoc JSON format
-    pub filename: String,
-    #[allow(dead_code)] // Preserved to match rustdoc JSON format
-    pub begin: (u32, u32),
-    #[allow(dead_code)] // Preserved to match rustdoc JSON format
-    pub end: (u32, u32),
-}
-
-// Simplified structures for the modern format
-#[derive(Debug, Deserialize)]
-#[allow(dead_code)] // This struct is not currently used but kept for future extensibility
-pub struct ModernFunction {
-    pub sig: serde_json::Value,
-    pub generics: serde_json::Value,
-    pub header: serde_json::Value,
-    pub has_body: bool,
-}
-
-#[derive(Debug, Deserialize)]
-#[allow(dead_code)] // This struct is not currently used but kept for future extensibility
-pub struct ModernStruct {
-    pub kind: serde_json::Value,
-    pub generics: serde_json::Value,
-    pub impls: Vec<u32>,
-}
 
 // Parsed data structures - representing items in a more structured way
-#[derive(Debug, Clone)]
-pub enum ParsedVisibility {
-    Public,
-    Private,
-    Crate,
-    Restricted(String),
-    Simple(String), // For backward compatibility with tests
-}
 
 #[derive(Debug, Clone)]
 pub enum RustType {
@@ -164,7 +112,6 @@ pub struct GenericParam {
 pub enum GenericParamKind {
     Type { bounds: Vec<String> },
     Lifetime,
-    Const { ty: RustType },
 }
 
 #[derive(Debug, Clone)]
@@ -195,7 +142,9 @@ pub struct ParsedField {
     pub name: String,
     pub visibility: Visibility,
     pub field_type: RustType,
+    #[allow(dead_code)]
     pub docs: Option<String>,
+    #[allow(dead_code)]
     pub deprecation: Option<Deprecation>,
 }
 
@@ -293,17 +242,10 @@ pub struct ParsedModule {
 
 #[derive(Debug, Clone)]
 pub struct ParsedMacro {
-    pub name: String,
     pub signature: String,
     pub docs: Option<String>,
 }
 
-#[derive(Debug, Clone)]
-pub struct ParsedReExport {
-    pub path: String,
-    pub name: String,
-    pub docs: Option<String>,
-}
 
 #[derive(Debug, Clone)]
 pub enum ParsedItem {
@@ -315,5 +257,4 @@ pub enum ParsedItem {
     Module(ParsedModule),
     Macro(ParsedMacro),
     TraitImpl(ParsedTraitImpl),
-    ReExport(ParsedReExport),
 }

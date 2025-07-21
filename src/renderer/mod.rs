@@ -5,5 +5,3 @@ pub mod renders;
 
 pub use renderer::*;
 pub use traits::*;
-pub use components::*;
-pub use renders::*;

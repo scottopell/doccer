@@ -1,5 +1,4 @@
 use crate::parser::*;
-use crate::renderer::traits::*;
 use rustdoc_types::Visibility;
 
 /// Helper for rendering type signatures
@@ -42,7 +41,6 @@ impl TypeRenderer {
                         format!("'{}", p.name)
                     }
                 }
-                GenericParamKind::Const { ty } => format!("const {}: {}", p.name, ty),
             })
             .collect();
 
@@ -91,15 +89,3 @@ impl DocRenderer {
     }
 }
 
-/// Helper for consistent indentation
-pub struct IndentationHelper;
-
-impl IndentationHelper {
-    pub fn indent_for_depth(depth: usize) -> String {
-        "  ".repeat(depth)
-    }
-
-    pub fn indent_from_context(context: &RenderContext) -> String {
-        context.indent()
-    }
-}

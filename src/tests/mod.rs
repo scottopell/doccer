@@ -333,7 +333,7 @@ mod formatting_tests {
         let renderer = create_parsed_renderer();
         
         // Call the renderer function
-        let doc_renderer = crate::renderer::DocRenderer;
+        let doc_renderer = crate::renderer::components::DocRenderer;
         output.push_str(&doc_renderer.render_docs(Some(&docs.to_string()), "  "));
 
         // Should have a single space after the doc comment prefix

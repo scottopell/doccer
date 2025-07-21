@@ -673,7 +673,6 @@ impl Render for ParsedItem {
             ParsedItem::Module(m) => m.render(context),
             ParsedItem::Macro(mac) => mac.render(context),
             ParsedItem::TraitImpl(impl_) => impl_.render(context),
-            ParsedItem::ReExport(_) => String::new(), // Re-exports are handled separately
         }
     }
 }

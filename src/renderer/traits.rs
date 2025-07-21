@@ -1,4 +1,3 @@
-use crate::parser::*;
 
 /// Configuration context for rendering operations
 #[derive(Debug, Clone)]
@@ -48,7 +47,3 @@ pub trait Render {
     fn render(&self, context: &RenderContext) -> String;
 }
 
-/// Trait for rendering specific components like types, documentation, etc.
-pub trait ComponentRenderer<T> {
-    fn render_component(&self, item: &T, context: &RenderContext) -> String;
-}
